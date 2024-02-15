@@ -95,6 +95,7 @@ class EdbAlignmentV : public TObject
   Int_t           CalculateAffXY( EdbAffine2D &aff) {return CalculateAffXY( eS[0], eS[1], aff);}
   Int_t           CalculateAffTXTY( EdbAffine2D &aff) {return CalculateAffTXTY( eS[0], eS[1], aff);}
   Int_t           CalculateAffXYTurn(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);
+  Int_t           CalculateAffXYShift(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);
   Int_t           CalculateAffXY(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);
   Int_t           CalculateAffTXTY(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);
   Int_t           CalculateAffTXTYTurn(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);

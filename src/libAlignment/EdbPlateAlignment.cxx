@@ -179,15 +179,6 @@ void EdbPlateAlignment::ProduceReport()
      }
   }
 
-
-  if(eOutputFile) {
-    Log(2,"Alignment Report","Save to file %s", eOutputFile->GetName());
-    gStyle->SetPalette(1);
-    bool batch = gROOT->IsBatch();
-    gROOT->SetBatch();
-    
-    TCanvas *cc = new TCanvas("cc","Alignment report",800,800);
-    
     EdbAffine2D *aXY = eCorrL[0].GetAffineXY();
     float xcenter1 = (ePC[0].Xmin()+ePC[0].Xmax())/2.;
     float ycenter1 = (ePC[0].Ymin()+ePC[0].Ymax())/2.;
@@ -200,6 +191,15 @@ void EdbPlateAlignment::ProduceReport()
 			    eS[0].GetEntries(),(int)eH_xy_coarse.ePeak[0], eH_xy_coarse.eMean[0], 
 			    xoffset, yoffset, eCorrL[0].Zcorr() );
     Log(1,"Alignment Report","%s", str);
+
+  if(eOutputFile) {
+    Log(2,"Alignment Report","Save to file %s", eOutputFile->GetName());
+    gStyle->SetPalette(1);
+    bool batch = gROOT->IsBatch();
+    gROOT->SetBatch();
+    
+    TCanvas *cc = new TCanvas("cc","Alignment report",800,800);
+    
     
     TPaveText *ctit = new TPaveText(0.01,0.943,0.99,0.998);
     ctit->AddText( Form("Alignment of  %s",eOutputFile->GetName()) );
@@ -362,8 +362,9 @@ void EdbPlateAlignment::FineAlAff(EdbPattern &p1, EdbPattern &p2, EdbLayer &la1)
   TObjArray sel1, sel2;
   int npk= Ncoins(eDVsame, &eHxy, 0, &sel1, &sel2);
   EdbAffine2D aff;
-  if(eNoScale) CalculateAffXYTurn(sel1,sel2,aff);
-  else         CalculateAffXY(sel1,sel2,aff);
+  if(eNoScale)         CalculateAffXYTurn(sel1,sel2,aff);
+  else if(eNoScaleRot) CalculateAffXYShift(sel1,sel2,aff);
+  else                 CalculateAffXY(sel1,sel2,aff);
   la1.GetAffineXY()->Transform(&aff);
   
   EdbAffine2D afftxty;
