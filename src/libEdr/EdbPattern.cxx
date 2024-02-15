@@ -1466,6 +1466,16 @@ void EdbPattern::SetSegmentsScanID(EdbID id)
 }
 
 //______________________________________________________________________________
+Int_t EdbPattern::AddPattern(EdbPattern &p)
+{
+  int n=p.N();
+  Expand( N()+n );
+  for(int i=0; i<n; i++)
+    AddSegment( *(p.GetSegment(i)) );
+  return n;
+}
+
+//______________________________________________________________________________
 EdbPattern *EdbPattern::ExtractSubPattern(float min[5], float max[5], int MCEvt)
 {
   //

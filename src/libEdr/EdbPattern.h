@@ -68,6 +68,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
 
   TClonesArray *GetSegments()     const { return eSegments; }
   void         *GetSegmentsAddr()       { return &eSegments; }
+  void Expand(int n) {eSegments->Expand(n);}
 
   void      SetSegmentsZ();
   void      SetSegmentsDZ(float dz);
@@ -305,6 +306,7 @@ class EdbPattern : public EdbSegmentsBox {
   void  SetSegmentsPID();
   void  SetSegmentsScanID(EdbID id);
   EdbPattern *ExtractSubPattern(float min[5], float max[5], int MCevt=-1);
+  Int_t       AddPattern(EdbPattern &p);
 
   void  SetID(int id)   {eID=id;}
   void  SetPID(int pid) {ePID=pid;}
