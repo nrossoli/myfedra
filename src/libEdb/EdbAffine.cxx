@@ -132,6 +132,35 @@ Int_t EdbAffine2D::Calculate(int n, float *x0, float *y0, float *x1, float *y1, 
 }
 
 //______________________________________________________________________________
+Int_t EdbAffine2D::CalculateShift(int n, float *x0, float *y0, float *x1, float *y1)
+{
+  // calculate only the offset without scaling and rotation
+  Double_t a,b,c,d,p,q;
+  a=b=c=d=p=q=0;
+
+  if(n<1)    return 0; 
+  else {
+    Double_t  sx0 =0, sy0 =0;
+    for(int i=0; i<n; i++) {
+      sx0 += x1[i]-x0[i];
+      sy0 += y1[i]-y0[i];
+    }
+    
+    a = 1;
+    b = 0;
+    c = 0;
+    d = 1;
+    p = sx0/n;
+    q = sy0/n;
+  }
+
+  Log(3,"CalculateShift","Aff2D( %6d ): %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f", 
+      n, a,b,c,d,p,q);
+  Set(a,b,c,d,p,q);
+  return  1; 
+}
+
+//______________________________________________________________________________
 Int_t EdbAffine2D::CalculateFull(int n, float *x0, float *y0, float *x1, float *y1)
 {
   //
