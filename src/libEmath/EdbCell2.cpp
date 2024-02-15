@@ -117,10 +117,19 @@ void EdbH2::CleanCells()
 
 //____________________________________________________________________________
 int EdbH2::Fill(float x, float y, int n)
-{ 
+{
   if(x>eMin[0]&&x<eMax[0]&&y>eMin[1]&&y<eMax[1]) {
     int j = Jcell(x,y);
-    if(j<0)              return 0;
+    return Fill(j,n);
+  }
+  return 0;
+}
+
+//____________________________________________________________________________
+int EdbH2::Fill(int j, int n)
+{ 
+  if( j>-1 && j<eNcell)
+  {
     eNC[j] += n;
     return n;
   }

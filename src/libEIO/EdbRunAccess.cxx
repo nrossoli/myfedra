@@ -535,6 +535,37 @@ int EdbRunAccess::GetPatternData( EdbPattern &pat, int side,
 }
 
 ///_________________________________________________________________________
+int EdbRunAccess::GetPatternView( EdbPattern &pat, int side, int entry, int &nrej )
+{
+  // get raw segments as a pattern for the given entry in a Views tree
+  
+  EdbSegP    segP;
+  EdbView    *view = eRun->GetView();
+  int   nseg=0;
+  nrej=0;
+  
+  if(eCLUST)       {
+    view = eRun->GetEntry(entry,1,1,1);
+    view->AttachClustersToSegments();
+  }
+  else 
+    view = eRun->GetEntry(entry);
+  
+  int nsegV = view->Nsegments();
+  
+  for(int j=0;j<nsegV;j++) {
+    if(!AcceptRawSegment(view,j,segP,side,entry)) {
+      nrej++;
+      continue;
+    }
+    nseg++;
+    pat.AddSegment( segP);
+  }
+  
+  return nseg;
+}
+
+///_________________________________________________________________________
 int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat )
 {
   // get raw segments belonging to views having a given id (view->GetHeader()->GetTrack()) and a given side

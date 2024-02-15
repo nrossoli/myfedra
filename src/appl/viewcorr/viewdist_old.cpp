@@ -6,7 +6,7 @@
 #include <TEnv.h>
 #include "EdbLog.h"
 #include "EdbRun.h"
-#include "EdbDistortion.h"
+#include "EdbViewMatch.h"
 
 using namespace std;
 
@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
   cenv.SetValue("viewdist.env"            , env);
   cenv.ReadFile( cenv.GetValue("viewdist.env"   , "viewdist.rootrc") ,kEnvLocal);
   
-  EdbDistortionCorr vm;
+  EdbViewMatch vm;
   vm.MakeDistortionMap( fname, cenv, usefile, addfile );
   
   cenv.WriteFile("viewdist.save.rootrc");

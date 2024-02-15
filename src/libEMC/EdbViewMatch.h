@@ -36,6 +36,7 @@ class EdbViewMatch : public TObject {
 private:
   int        eNClMin;      // minimal number of clusters inside grain to be used for corrections
   float      eR2CenterMax; // the maximal distance to the matrix center for the reference cluster
+  int        eNCenterMin;  // the minimal number of cluster appearance in the central region
   float      eRmax;        // acceptance for clusters matching
   
   TClonesArray  eCl;       // array of EdbClMatch objects
@@ -68,6 +69,7 @@ public:
   void AddCluster( EdbClMatch *c );
   
   void CalculateGrRef();
+  void CalculateGrRefMean();
   void CalculateCorr();
   void DrawCorrMap();
   void GenerateCorrectionMatrix(bool do_add);
@@ -85,5 +87,4 @@ public:
   
   ClassDef(EdbViewMatch,1)  // 
 };
-
 #endif /* ROOT_EdbViewMatch */

@@ -144,6 +144,7 @@ class EdbRunAccess : public TObject {
   int GetPatternXY(EdbSegP &s, int side, EdbPattern &pat, float rmin=200);
   int GetPatternData(EdbPattern &pat, int side, int nviews, TArrayI &srt, int &nrej);
   int GetPatternDataForPrediction( int id, int side, EdbPattern &pat );
+  int GetPatternView( EdbPattern &pat, int side, int entry, int &nrej );
 
   bool  AcceptRawSegment(EdbView *view, int ud, EdbSegP &segP, int side, int entry);
 

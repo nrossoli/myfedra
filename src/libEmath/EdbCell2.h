@@ -87,6 +87,7 @@ class EdbH2 : public TObject {
   void  AddBin(int jcell, int n) { if(jcell>=0&&jcell<eNcell) eNC[jcell]+=n; }
   int   Fill(float x, float y) { return Fill(x,y,1); }
   int   Fill(float x, float y, int n);
+  int   Fill(int j, int n=1);
   void  SetBin(int ix, int iy, int n) { if(Jcell(ix,iy)>-1) eNC[Jcell(ix,iy)] = n; }
   void  SetBin(int j, int n) { if(j>-1||j<eNcell) eNC[j] = n; }
 

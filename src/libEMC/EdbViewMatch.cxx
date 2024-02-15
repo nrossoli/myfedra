@@ -29,6 +29,7 @@ EdbViewMatch::EdbViewMatch()
 {
   eNClMin      = 20;
   eR2CenterMax = 15.;
+  eNCenterMin  =  1;
   eRmax        =  1.;
   eOutputFile  =  0;
 
@@ -180,6 +181,34 @@ void EdbViewMatch::CalculateGrRef()
       } else c->eIsCenter=0;
     }
  }
+}
+
+//____________________________________________________________________________________
+void EdbViewMatch::CalculateGrRefMean()
+{
+  // take as grain reference position the mean of grains closer then eR2CenterMax to the view center
+  
+  int ngr = eGr.GetEntries();
+  for(int i=0; i<ngr; i++) {
+    EdbSegment *s = ((EdbSegment*)eGr.UncheckedAt(i));
+    s->SetSide(0);
+    int nc = s->GetNelements();
+    double x0=0, y0=0, r0=0;
+    int n0=0;
+    for( int ic=0; ic<nc; ic++ ) {
+      EdbClMatch *c = (EdbClMatch *)(s->GetElements()->UncheckedAt(ic));
+      float r = Sqrt( c->eX*c->eX + c->eY*c->eY );                                     // distance to the view center
+      if(r<=eR2CenterMax) { x0 += (c->eXv+c->eX); y0+=(c->eYv+c->eY); r0+=r; n0++; }
+    }
+    if( n0 >= eNCenterMin)   // select as a reference
+    { 
+      x0 /= n0;
+      y0 /= n0;
+      r0 /= n0;
+      s->SetX0( x0 ); s->SetY0( y0 ); s->SetDz(r0);
+      s->SetSide( n0 );   // use as a counter
+    }
+  }
 }
 
 //____________________________________________________________________________________
@@ -508,7 +537,8 @@ void EdbViewMatch::MakeDistortionMap( const char *fname, TEnv &cenv, const char 
   }
   printf("\nread %d clusters from %s\n",count,fname);
 
-  CalculateGrRef();
+//  CalculateGrRef();
+  CalculateGrRefMean();
   
   eOutputFile = new TFile("map.root","RECREATE");
   //if(eDumpGr) { TNtuple *ntgr = DumpGr("gr"); ntgr->Write(); }
@@ -562,6 +592,5 @@ void EdbViewMatch::ReadMatrix2Map(const char *file, EdbCell2 &map)
     int w = eCorrMap0.Bin(i);                                   if(!w) continue;
     (*dxy)[0] /= w;
     (*dxy)[1] /= w;
-  }
-  
+  }  
 }

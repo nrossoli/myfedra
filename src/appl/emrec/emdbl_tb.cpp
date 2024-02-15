@@ -153,8 +153,8 @@ void DoTraceBackCP( EdbID id, const char *treename, TEnv &cenv )
 
 void FillRawPat( const EdbRunAccess &run, 
 		 const EdbPattern &pp, 
-		 EdbPattern &ppr, 
-		 EdbPattern &ppv, 
+		 EdbPattern &ppr,         // raw segment information
+		 EdbPattern &ppv,         // raw view information
 		 const TArrayI &viewid,
 		 const TArrayI &ind
 	       )
