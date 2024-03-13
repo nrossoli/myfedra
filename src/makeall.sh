@@ -4,8 +4,7 @@
 #       ./makeall.sh  depend - create all dependencies
 #
 
-LIBS="libEdb libEbase libDataConversion libEGA libEmath libEphys libEdr libEIO 
-libEMC libEdd libVt++ libAlignment libScan libShower libEmr libEDA libShowRec libAnalysis"
+LIBS="libEdb libEbase libDataConversion libEGA libEmath libEphys libEdr libEIO libEMC libEdd libVt++ libAlignment libScan libShower libEmr libEDA libShowRec libAnalysis libMosaic"
 
 if [ "${ORACLE_HOME}" != "" ]; then
 LIBS="${LIBS} libEOracle"
