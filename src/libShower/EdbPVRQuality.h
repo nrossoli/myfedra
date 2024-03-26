@@ -408,7 +408,6 @@ public:
     EdbPVRec* CreateEdbPVRec();
 
     TCanvas* GetQualityPlots(Int_t CountNr=0, Int_t aliSourceType=0);
-//     TCanvas* GetQualityPlotsSingle(Int_t aliSourceType=0, Int_t Plottype=-1, Int_t CountNr=0);
     TPad* GetQualityPlotsSingle(Int_t CountNr=0, Int_t aliSourceType=0, Int_t Plottype=-1);
 
     EdbPVRec* ExtractDataVolume(EdbPVRec* pvr, EdbSegP* seg, Float_t tolerance[4]);

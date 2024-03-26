@@ -3068,7 +3068,7 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
     // basetrack is seen differently in two different views.
     // In Bern data, we do see clearly this double bump, that is characterized by
     // _very_ close values of two BTs in X,Y,TX,TY (and also Chi2 and W).
-    // Separation threshold values are 2microns in postion and 10 mrad in angle.
+    // Separation threshold values are 2 microns in postion and 10 mrad in angle.
     // (again obtained from Bern data).
 
     // Quick and Dirty implementation !
