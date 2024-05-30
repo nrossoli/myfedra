@@ -140,9 +140,13 @@ void EdbViewMap::ReadViewsHeaders(const char *file, TCut &cut)
   for(int i=0; i<n; i++)
   {
     view = r.GetEntry(lst->GetEntry(i),1,0,0,0);
-    if(view) 
-      if(view->GetHeader()) 
-        eViewHeaders.Add( new EdbViewHeader( *(view->GetHeader()) ) );
+    if(view) {
+      EdbViewHeader *h = view->GetHeader();
+      if(h) {
+	h->SetStatus(lst->GetEntry(i));  // keep the entry number in status
+        eViewHeaders.Add( new EdbViewHeader( *h ) );
+      }
+    }
   }
   eNvh = n;
   r.Close();
