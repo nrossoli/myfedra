@@ -76,6 +76,7 @@ class EdbAlignmentV : public TObject
   Int_t           Ncp() {return  CheckEqualArr( eS[0], eS[1]); }
   void            AddSegCouple(EdbSegP *s1, EdbSegP *s2) { eS[0].Add(s1); eS[1].Add(s2); }
   Float_t         CalcMeanDiff(int ivar);
+  Float_t         CalcMeanDiff2Const(int ivar, int side, float mean);
   Float_t         CalcFractMeanDiff(int ivar, float fraction);
   Float_t           FindDensityPeak(TArrayF &arr, float fraction);
   Float_t         CalcMeanShr(float tmin=0.1, float tmax=2.);

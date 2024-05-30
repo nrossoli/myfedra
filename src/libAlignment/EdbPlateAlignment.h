@@ -34,6 +34,7 @@ class EdbPlateAlignment : public EdbAlignmentV
   
   TObjArray   eSegCouples;       // segment couples objects to fill couples format tree
   Bool_t     eDoCorrectBeforeSaving; // apply corrections before saving the couples tree in al.root
+  Bool_t     eDoCorrectAngle;    // calculate and apply to the layer angular transformation
 
  public:
   EdbPlateAlignment();

@@ -26,6 +26,7 @@ using namespace TMath;
 //---------------------------------------------------------------------
 EdbLinking::EdbLinking()
 {
+  eSegCouples.SetOwner();
 }
 
 //---------------------------------------------------------------------
@@ -584,6 +585,7 @@ void EdbLinking::ProduceReport()
 
     crep1->Write("report");
     SafeDelete(crep1);
+    SafeDelete(ctit);
     gROOT->SetBatch(batch);
   }
 }
@@ -616,6 +618,10 @@ void EdbLinking::DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist)
   if(hxy2)   hxy2->Write();
   if(htxty1) htxty1->Write();
   if(htxty2) htxty2->Write();
+  SafeDelete(hxy1);
+  SafeDelete(hxy2);
+  SafeDelete(htxty1);
+  SafeDelete(htxty2);
 }
 
 //---------------------------------------------------------------------

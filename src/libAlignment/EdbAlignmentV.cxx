@@ -547,6 +547,21 @@ Float_t EdbAlignmentV::CalcMeanDiff(int ivar)
 }
 
 //---------------------------------------------------------------------
+Float_t EdbAlignmentV::CalcMeanDiff2Const(int ivar, int side, float mean)
+{
+  //  Calculate mean difference to the the given constant taking into account corrections
+  int n = Ncp();
+  int ic=0;
+  Double_t sd=0;
+  for(int i=0; i<n; i++) {
+    sd   += ( Var( side, i, ivar ) - mean );
+    ic++;
+  }
+  sd /= ic;
+  return sd;
+}
+
+//---------------------------------------------------------------------
 Float_t EdbAlignmentV::CalcFractMeanDiff(int ivar, float fraction)
 {
   //  Calculate mean difference for the highest density region
