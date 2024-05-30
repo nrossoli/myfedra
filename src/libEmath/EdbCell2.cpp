@@ -7,6 +7,8 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include <vector>
+#include <algorithm>
 #include "TBuffer.h"
 #include "TDirectory.h"
 #include "TMath.h"
@@ -697,6 +699,28 @@ bool EdbCell2::AddObject(float x, float y, TObject *obj)
 { 
   int j = Jcell(x,y);
   return AddObject(j, obj);
+}
+
+//____________________________________________________________________________
+int EdbCell2::AddObjectOverlap(float x, float y, float dx, float dy, TObject *obj)
+{
+  // works correctly if overlap less then the cell size
+  int cnt=0;
+  std::vector<int> J;
+  J.push_back( Jcell(x,y) );
+  J.push_back( Jcell(x+dx,y) );
+  J.push_back( Jcell(x-dx,y) );
+  J.push_back( Jcell(x,y+dy) );
+  J.push_back( Jcell(x,y-dy) );
+  std::sort(J.begin(), J.end());
+  std::vector<int>::iterator ip = std::unique( J.begin(), J.end() );
+  J.resize( std::distance(J.begin(), ip) );
+  for (ip=J.begin(); ip!=J.end(); ++ip)
+  {
+    AddObject(*ip,obj); 
+    cnt++;
+  }
+  return cnt;
 }
 
 //____________________________________________________________________________

@@ -175,7 +175,8 @@ class EdbCell2 : public EdbH2 {
   bool  AddObject( float x, float y, TObject *obj );
   bool  AddObject( int ix, int iy, TObject *obj );
   bool  AddObject( int j, TObject *obj );
-
+  int   AddObjectOverlap(float x, float y, float dx, float dy, TObject *obj);
+  
   int SelectObjects(TObjArray &arr);
   int SelectObjects(int   min[2], int max[2], TObjArray &arr);
   int SelectObjects(float min[2], float max[2], TObjArray &arr);

@@ -25,4 +25,6 @@
 
 #pragma link C++ class EdbFilter2D;
 
+#pragma link C++ class EdbAttachPath;
+
 #endif
