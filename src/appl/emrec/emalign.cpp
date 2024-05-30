@@ -43,6 +43,8 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.align.SigmaT"      ,  0.012);
   cenv.SetValue("fedra.align.DoFine"      ,  1    );
   cenv.SetValue("fedra.readCPcut"         , "eCHI2P<2.0&&s.eW>10&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.99");
+  cenv.SetValue("fedra.readCPcutA"         , "1");
+  cenv.SetValue("fedra.readCPcutB"         , "1");
   cenv.SetValue("fedra.align.SaveCouples" ,  1    );
 
   cenv.SetValue("emalign.outdir"          , ".."  );
