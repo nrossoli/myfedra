@@ -38,6 +38,7 @@ public:
 
   bool   InitCouplesTree(const char *name="couples", const char *fname=0, Option_t *mode="READ");
   TEventList *InitCutList();
+  void   SaveTree();
   void   Close();
   Int_t  Fill(EdbSegP *s1, EdbSegP *s2, EdbSegP *s=0, EdbSegCouple *cp=0, float xv=0, float yv=0, int pid1=0, int pid2=0 );
   Int_t  Fill();

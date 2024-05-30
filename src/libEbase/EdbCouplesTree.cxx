@@ -57,6 +57,16 @@ void EdbCouplesTree::Print()
 }
 
 ///______________________________________________________________________________
+void EdbCouplesTree::SaveTree()
+{
+  if(eTree)
+  {
+    TFile *f = (TFile*)(eTree->GetDirectory()->GetFile());
+    if(f->IsWritable()) eTree->AutoSave();
+  }
+}
+
+///______________________________________________________________________________
 void EdbCouplesTree::Close()
 {
   if (eTree) {
@@ -353,7 +363,7 @@ int EdbCouplesTree::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, 
 
   SafeDelete(lst);
 
-  Log(2,"EdbCouplesTree::GetCPData","select %d of %d segments by cut %s ; %d are erased by mask",nlst, (int)(eTree->GetEntries()), eCut.GetTitle(), nerase);
+  Log(2,"EdbCouplesTree::GetCPData","select %d of %d segments by cut %s ; %d erased by mask",nlst, (int)(eTree->GetEntries()), eCut.GetTitle(), nerase);
 
   return nseg;
 }

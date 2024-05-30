@@ -29,6 +29,7 @@ void EdbLayer::Set0()
   eDX=eDY=kMaxInt;
   eShr = 1.;
   eZcorr=0;
+  eNcp=0;
 }
 
 ///______________________________________________________________________________
@@ -148,7 +149,7 @@ bool EdbLayer::IsInside(float x, float y)
 ///______________________________________________________________________________
 void EdbLayer::Print()
 {
-  printf("Layer:\t%d\n",eID);
+  printf("Layer:\t%d  \t%f %f\n",eID,eX,eY);
   printf("Ncp:\t%d\n", eNcp );
   printf("ZLAYER\t%f %f %f\n",eZ,eZmin,eZmax);
   printf("SHR\t%f\n",eShr);
@@ -205,6 +206,23 @@ void EdbCorrectionMap::ApplyCorrections(EdbCorrectionMap &map)
     loc->ApplyCorrections( *locD );
   }
 }
+
+/*
+//-----------------------------------------------------------------------------------------------------
+void EdbCorrectionMap::MakeOrderedListFrom(const float x0, const float y0, TList &list)
+{
+  int n=Ncell();
+  TArrayI ind(n);
+  TArrayF  r2(n);
+  for(int i=0; i<n; i++) {
+    EdbLayer *la  = GetLayer(i);
+    float dx = la->X()-x0;
+    float dy = la->Y()-y0;
+    r2[i] = dx*dx+dy*dy;
+  }
+  TMath::Sort(nseg,r2.GetArray(),ind.GetArray(),0);  
+}
+*/
 
 //-----------------------------------------------------------------------------------------------------
 int EdbCorrectionMap::Ncp()
