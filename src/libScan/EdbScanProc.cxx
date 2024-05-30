@@ -498,11 +498,13 @@ int EdbScanProc::AlignNewNopar(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *af
   av.eDZ          = cenv.GetValue("fedra.align.DZ"          , 120.);
   av.eDPHI        = cenv.GetValue("fedra.align.DPHI"        , 0.008 );
   const char *cut = cenv.GetValue("fedra.readCPcut"         , "eCHI2P<2.5&&s.eW>18&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.5");
+  const char *cutA = cenv.GetValue("fedra.readCPcutA"         , "1");
+  const char *cutB = cenv.GetValue("fedra.readCPcutB"         , "1");
   av.eSaveCouples = cenv.GetValue("fedra.align.SaveCouples" , 1);
 
   EdbPattern p1,p2;
-  ReadPatCPnopar( p1, id1, cut );
-  ReadPatCPnopar( p2, id2, cut );
+  ReadPatCPnopar( p1, id1, Form("(%s)&&(%s)",cut,cutA) );
+  ReadPatCPnopar( p2, id2, Form("(%s)&&(%s)",cut,cutB) );
   if(aff) { aff->Print(); p1.Transform(aff);}
  
   TString dataout;  MakeAffName(dataout,id1,id2,"al.root");

@@ -8,6 +8,7 @@
 // To handle tracking in the scanset (IO)                               //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+#include <TH3F.h>
 #include "TEnv.h"
 #include "EdbScanProc.h"
 #include "EdbTrackFitter.h"
@@ -43,7 +44,10 @@ class EdbTrackAssembler: public TObject {
   TH1F           *eHistThetaBest;   // theta of the best candidate
   TH1F           *eHistThetaAll;    // theta of all candidate
   TH1F           *eHistNcnd;        // number of candidates after preliminary selection
-  
+  TH2F           *eHistXYseg;       // XY overlap of all segments (for showers tag)
+  TH3F           *eHistXYPseg;      // XYP overlap of all segments (for showers tag)
+  TH2F           *eHistTXTYseg;     // TXTY overlap of all segments
+ 
  public:
   EdbTrackAssembler();
   virtual ~EdbTrackAssembler();
@@ -68,6 +72,7 @@ class EdbTrackAssembler: public TObject {
   void        SetSegmentsErrors();
   void        FitTracks();
   void        CombTracks( TObjArray &selected );
+  void        FillXYseg(EdbPattern &p);
   
   void CheckPatternAlignment(EdbPattern &p, EdbPlateP &plate, int nsegmin);
   

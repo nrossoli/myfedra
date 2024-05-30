@@ -6,6 +6,10 @@
   // To handle tracking in the scanset                                    //
   //                                                                      //
   //////////////////////////////////////////////////////////////////////////
+#include "TROOT.h"
+#include "TCanvas.h"
+#include "TStyle.h"
+#include "TGraph.h"
 #include "EdbLog.h"
 #include "EdbDataSet.h"
 #include "EdbScanTracking.h"
@@ -13,9 +17,6 @@
 #include "EdbPlateAlignment.h"
 #include "EdbTrackFitter.h"
 #include "EdbPhys.h"
-#include "TCanvas.h"
-#include "TStyle.h"
-#include "TROOT.h"
   
 using namespace TMath;
   
@@ -49,6 +50,9 @@ EdbTrackAssembler::~EdbTrackAssembler()
   eHistProbAll  = new TH1F("ProbAll","prob for all candidates", 250,0,1);
   eHistThetaBest = new TH1F("ThetaBest","angle theta for best selected candidate", 180,0,TMath::PiOver2());
   eHistThetaAll  = new TH1F("ThetaAll","angle theta for all candidates", 180,0,TMath::PiOver2());
+  eHistXYseg=0;
+  eHistXYPseg=0;
+  eHistTXTYseg=0;
 
     // for basetracks:
   eCond.SetDefault();
@@ -79,10 +83,11 @@ void EdbTrackAssembler::CheckPatternAlignment(EdbPattern &p, EdbPlateP &plate,  
   for(int i=0; i<ntr; i++) ptr.AddSegment( *((EdbSegP*)(eTrZ.UncheckedAt(i))) );
     
   EdbPlateAlignment al;
-  al.SetSigma( 25, 0.015 );
+  al.SetSigma( 2.5, 0.003 );
   al.eOffsetMax = 500.;
   al.eDZ        = 0;
   al.eDPHI      = 0.00;
+  al.SetDoublets(0.5,0.5,0.001,0.001);
     //al.eDoCoarse=1;
   al.Align(ptr,p,0);
   
@@ -99,10 +104,72 @@ void EdbTrackAssembler::CheckPatternAlignment(EdbPattern &p, EdbPlateP &plate,  
   plate.GetAffineTXTY()->Transform(afftxty);
 }
   
-  //--------------------------------------------------------------------------------------
-  void EdbTrackAssembler::AddPattern(EdbPattern &p)
+//--------------------------------------------------------------------------------------
+void EdbTrackAssembler::FillXYseg(EdbPattern &p)
 {
-    //int ntrBefore=eTracks.GetEntriesFast();
+  // test function probably to be moved out of this class
+  float xmi=p.Xmin();
+  float xma=p.Xmax();
+  float ymi=p.Ymin();
+  float yma=p.Ymax();
+  if(!eHistXYseg) 
+  {
+    float dx= xma-xmi;
+    float dy= yma-ymi;
+    float nx= 3*dx/50;  //TODO: bin size as a parameter?
+    float ny= 3*dy/50;
+    eHistXYseg = new TH2F("XYseg", "XY overlap all beam-like segments used for tracking", 
+			  nx,xmi-dx,xma+dx,ny,ymi-dy,yma+dy );
+  }
+  if(!eHistXYPseg) 
+  {
+    float dx= xma-xmi;
+    float dy= yma-ymi;
+    float nx= 3*dx/50;  //TODO: bin size as a parameter?
+    float ny= 3*dy/50;
+    eHistXYPseg = new TH3F("XYPseg", "XYP overlap all beam-like segments used for tracking", 
+			  nx,xmi-dx,xma+dx,ny,ymi-dy,yma+dy,60,0,60);
+  }
+  if(!eHistTXTYseg) 
+  {
+    eHistTXTYseg = new TH2F("TXTYseg", "TXTY overlap all beam-like segments used for tracking", 
+			  200,-1,1,200,-1,1 );
+  }
+  int plate = p.ScanID().ePlate;
+  int n=p.N();
+  //TArrayF x(n),y(n);
+  //int cnt=0;
+  for(int i=0; i<n; i++)
+  {
+    EdbSegP *s = p.GetSegment(i);
+    eHistTXTYseg->Fill(s->TX(),s->TY());
+    if(Abs(s->TX())<0.1&&Abs(s->TY())<0.1) 
+    {
+      eHistXYseg->Fill(s->X(),s->Y());
+      eHistXYPseg->Fill(s->X(),s->Y(),plate);
+      //x[cnt++]=s->X();
+      //y[cnt]  =s->Y(); 
+    }
+  }
+  
+  //gROOT->SetBatch(true);
+  //TCanvas *c = new TCanvas("a","a",4000,4000);
+  //TGraph *gr =  new TGraph(cnt,x.GetArray(),y.GetArray());
+  //gr->SetMarkerStyle(1);
+  //TH2F *hh = (TH2F*)(eHistXYseg->Clone("hh"));
+  //hh->Reset();
+  //hh->Draw();
+  //gr->Draw("P");
+  //c->Print("tt.gif+10");
+  //delete gr;
+  //delete c;
+  //delete hh;
+}
+  
+//--------------------------------------------------------------------------------------
+void EdbTrackAssembler::AddPattern(EdbPattern &p)
+{
+   //int ntrBefore=eTracks.GetEntriesFast();
     //if(ntrBefore>0) ExtrapolateTracksToZ(p.Z());
     
     //DoubletsFilterOut();
@@ -114,15 +181,30 @@ void EdbTrackAssembler::CheckPatternAlignment(EdbPattern &p, EdbPlateP &plate,  
     if(s->Flag()==-10)   continue;
     s->SetErrors();
     eCond.FillErrorsCov(s->TX(),s->TY(),s->COV());
-    if( !AddSegment( *(p.GetSegment(j)) ) )
-      AddSegmentAsTrack( *(p.GetSegment(j)) );
-    else attached++;
+    if( !AddSegment( *s ) )
+      AddSegmentAsTrack( *s );
+    else {
+      attached++;
+      s->SetTrack(1);
+    }
+  }
+  // calculate lost segments
+  int losttrack=0;
+  int lostflag=0;
+  for(int j=0; j<nseg; j++) {
+    EdbSegP *s = p.GetSegment(j);
+    if(s->Flag()!=-10)
+    {
+      if(s->Track()==-1) losttrack++;
+    } else lostflag++;
+    //AddSegmentAsTrack( *(p.GetSegment(j)) );
   }
   int ntrAfter = eTracks.GetEntriesFast();
     //int totSegTr=0;
     //for(int i=0; i<ntrAfter; i++) totSegTr += ((EdbTrackP*)(eTracks.At(i)))->N();
-  Log(2,"EdbTrackAssembler::AddPattern","with z=%10.2f   %d/%d attached/tried; total collisions: %d;  tracks: %d",
-      p.Z(), attached, nseg, eCollisionsRate, ntrAfter );
+  Log(2,"EdbTrackAssembler::AddPattern","with z=%10.2f   %d/%d attached/tried; collisions/lt/lf: %d/%d/%d;  tracks: %d",
+      p.Z(), attached, nseg, eCollisionsRate,losttrack,lostflag, ntrAfter );
+  eCollisionsRate=0;
 }
   
 //--------------------------------------------------------------------------------------
@@ -158,6 +240,7 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
     else {
       if( !SameSegment(s,*sz) ) {
         if( s.Prob() > sz->Prob() )  t->SubstituteSegment( sz ,  eSegments.AddSegment(s) );
+	sz->SetTrack(-1);
         eCollisionsRate++;
       }
     }
@@ -245,7 +328,8 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
 {
   if(s.W()<16    )  return 0;
   if(s.Chi2()>2.5)  return 0;
-  EdbTrackP *t = new EdbTrackP( eSegments.AddSegment(s), 0.139);    // EdbTrackAssembler is owner of segments 
+  EdbTrackP *t = new EdbTrackP( eSegments.AddSegment(s), 0.139);    // EdbTrackAssembler is owner of segments
+  s.SetTrack(0);
   eTracks.Add(t);
     //EdbSegP ss;
     //t->MakePredictionTo(eZ,ss);
@@ -477,6 +561,7 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     etra.eProbMin               = env.GetValue("fedra.track.probmin"        ,  0.001   );
     bool        do_erase        = env.GetValue("fedra.track.erase"          ,  false   );
     const char  *cut            = env.GetValue("fedra.readCPcut"            ,     "1"  );
+    bool        do_shtag        = env.GetValue("fedra.track.do_shtag"       ,  false   );  // no tracking only shower tag info
     bool        do_misalign     = env.GetValue("fedra.track.do_misalign"    ,      0   );
     int         npass           = env.GetValue("fedra.track.npass"          ,      1   );
     float       misalign_offset = env.GetValue("fedra.track.misalign_offset",    500.  );
@@ -504,6 +589,7 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     }
   
   // read segments and use them for tracking
+    int all_volume_segments=0;
     for(int ipass=0; ipass<npass; ipass++) {
       if(gEDBDEBUGLEVEL>1) printf("\n\n*************** ipass=%d ************\n",ipass);
       etra.eCollisionsRate=0;
@@ -513,13 +599,13 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
         EdbPlateP *plate = ss->GetPlate(id->ePlate);
       
         EdbPattern p;
-        eSproc->ReadPatCPnopar(p,*id, cut, do_erase);
+	p.SetScanID(*id);
+        all_volume_segments += eSproc->ReadPatCPnopar(p,*id, cut, do_erase);
         p.SetZ(plate->Z());
         p.SetSegmentsZ();
         p.SetID(i);
         p.SetPID(i);
         p.SetSegmentsPID();
-      //plate->Print();
         p.Transform(    plate->GetAffineXY()   );
         p.TransformShr( plate->Shr() );
         p.TransformA(   plate->GetAffineTXTY() );
@@ -546,8 +632,11 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
           if( i==1 ) etra.CheckPatternAlignment(p,*plate,1);
           if( i>1  ) etra.CheckPatternAlignment(p,*plate,1);
         }
-        etra.FillTrZMap();
-        etra.AddPattern(p);
+        if(!do_shtag) {
+	  etra.FillTrZMap();
+          etra.AddPattern(p);
+	}
+	etra.FillXYseg(p);
       }
     }
     
@@ -563,7 +652,9 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     etra.SetSegmentsErrors();
     etra.FitTracks();
 
-    TObjArray selectedTracks(ntr);
+    int cnt_badtrk=0;
+    int cnt_attached_segments=0;
+   TObjArray selectedTracks(ntr);
     if(do_comb) {
       etra.CombTracks(selectedTracks);
     } else {
@@ -576,9 +667,12 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
           t->SetSegmentsTrack();
           t->SetP(momentum);
           selectedTracks.Add(t);
-        }
+	  cnt_attached_segments += t->N();
+        } else cnt_badtrk++;
       }
     }
+    printf("\n segments all/attached: %d/%d     tracks selected/bad = %d/%d \n",
+	   all_volume_segments, cnt_attached_segments, selectedTracks.GetEntriesFast(), cnt_badtrk );
     EdbDataProc::MakeTracksTree( selectedTracks, 0., 0., Form("b%s.trk.root", idset.AsString()) );
     TFile f( Form("b%s.trk.root", idset.AsString()) ,"UPDATE");
     env.Write();
@@ -594,6 +688,9 @@ void EdbScanTracking::SaveHist(EdbID idset, EdbTrackAssembler &etra)
   if(etra.eHistNcnd) etra.eHistNcnd->Write();
   if(etra.eHistProbAll) etra.eHistProbAll->Write();
   if(etra.eHistProbBest) etra.eHistProbBest->Write();
+  if(etra.eHistXYseg)    etra.eHistXYseg->Write();
+  if(etra.eHistXYPseg)   etra.eHistXYPseg->Write();
+  if(etra.eHistTXTYseg)  etra.eHistTXTYseg->Write();
   TH1F *probrest = 0, *probPurity=0;
   if(etra.eHistProbAll&&etra.eHistProbBest) {
     probrest = (TH1F*)(etra.eHistProbAll->Clone("ProbRest"));
