@@ -78,9 +78,9 @@ class EdbH2 : public TObject {
   float Ybin()                const {return eBin[1];}
 
   int   Bin(float x, float y) const {return (Jcell(x,y)>-1)? eNC[Jcell(x,y)] : 0; }
-  int   Bin(int ix, int iy) const {return (Jcell(ix,iy)>-1)? eNC[Jcell(ix,iy)] : 0; }
-  int   Bin(int iv[2])      const {return Bin(iv[0],iv[1]);}
-  int   Bin(int j)          const {if(j>-1||j<eNcell) return eNC[j]; else return 0; }
+  int   Bin(int ix, int iy)   const {return (Jcell(ix,iy)>-1)? eNC[Jcell(ix,iy)] : 0; }
+  int   Bin(int iv[2])        const {return Bin(iv[0],iv[1]);}
+  int   Bin(int j)            const {if(j>-1||j<eNcell) return eNC[j]; else return 0; }
 
   int   MaxBin();
 
@@ -93,10 +93,8 @@ class EdbH2 : public TObject {
 
   Long_t  Integral();
   Long_t  Integral(int iv[2], int ir[2]);
-
   Float_t Mean() { return 1.*Integral()/eNcell; }
-
-  TH1I   *DrawSpectrum( const char *name="plot1d", const char *title="EdbH2 DrawSpectrun");
+  TH1I   *DrawSpectrum( const char *name="plot1d", const char *title="EdbH2 DrawSpectrum");
   TH2F   *DrawH2(       const char *name="plot2d", const char *title="EdbH2plot2D");
 
   ClassDef(EdbH2,2)  // fast 2-dim histogram class (used as a basis for EdbCell2)
@@ -110,7 +108,9 @@ class EdbPeak2 : public EdbH2 {
   TArrayF  ePeak;    //
   TArrayF  eMean3;   //
   TArrayF  eMean;    //
-  Float_t  eNorm;    // the norm-factor in case of the smoothing applied
+  Float_t  eNorm;    // the norm-factor to be applied in case of smoothing
+  TArrayF  eXpeak;   //
+  TArrayF  eYpeak;   //
 
  public:
   EdbPeak2() { InitPeaks(10); }
@@ -135,14 +135,16 @@ class EdbPeak2 : public EdbH2 {
   float   EstimatePeakVolume(int ipeak);
   float   EstimatePeakVolumeSafe(int ipeak);
   float   EstimatePeakMeanPosition(int iv[2], int ir[2], float &x, float &y);
-  float   Smooth(Option_t *option="k5a");
   float   Xmean();
   float   Ymean();
   float   Peak(int i=0)  const { if(i>=0&&i<eNpeaks) return ePeak[i];  else return -1; }
   float   Mean3(int i=0) const { if(i>=0&&i<eNpeaks) return eMean3[i]; else return -1; }
   float   Mean(int i=0)  const { if(i>=0&&i<eNpeaks) return eMean[i];  else return -1; }
+  float   Smooth(Option_t *option="k5a");
+  TH1F   *DrawSpectrumN( const char *name="spectrumN", const char *title="EdbH2 DrawSpectrum");
+  TH2F   *DrawH2N(       const char *name="xyN", const char *title="EdbH2plot2D");
 
-  ClassDef(EdbPeak2,1)  // peak analyser for EdbH2
+  ClassDef(EdbPeak2,2)  // peak analyser for EdbH2
 };
 
 //__________________________________________________________________________

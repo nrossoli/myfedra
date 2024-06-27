@@ -248,6 +248,118 @@ int EdbH2::MaxBin()
   return peak;
 }
 
+//______________________________________________________________________________
+float EdbPeak2::Smooth(Option_t *option)
+{
+   // Smooth bin contents of this 2-d histogram using kernel algorithms
+   // similar to the ones used in the raster graphics community.
+   // Bin contents in the active range are replaced by their smooth values.
+   //
+   // This code is copied from root_5.22 mainly to not depend on the newest root versions
+   // Adopted to fedra by VT
+   // to speedup processing do all calculations as integer, so the histogram do not normalised at output
+   // return value - norm-factor of the kernel
+
+   if(NX()<1||NY()<1)  return 1.;
+
+   Int_t k5a[5][5] =  { { 0, 0, 1, 0, 0 }, 
+			{ 0, 2, 2, 2, 0 }, 
+			{ 1, 2, 5, 2, 1 }, 
+			{ 0, 2, 2, 2, 0 }, 
+			{ 0, 0, 1, 0, 0 } };   // norm = 25
+   Int_t k5b[5][5] =  { { 0, 1, 2, 1, 0 },
+			{ 1, 2, 4, 2, 1 },
+			{ 2, 4, 8, 4, 2 },
+			{ 1, 2, 4, 2, 1 },
+			{ 0, 1, 2, 1, 0 } };
+   Int_t k3a[3][3] =  { { 0, 1, 0 },
+			{ 1, 2, 1 },
+			{ 0, 1, 0 } };      // norm = 6
+   Int_t k3b[3][3] =  { { 1, 2, 1 },        //gauss smoothing
+			{ 2, 4, 2 },
+			{ 1, 2, 1 } };      // norm = 16
+
+   Int_t ksize_x, ksize_y;
+   TString opt = option;
+   opt.ToLower();
+   Int_t *kernel = &k5a[0][0];
+   if (opt.Contains("k5a")) {
+     kernel = &k5a[0][0];
+     ksize_x = ksize_y = 5;
+   }
+   else if (opt.Contains("k5b")) {
+     kernel = &k5b[0][0];
+     ksize_x = ksize_y = 5;
+   }
+   else if (opt.Contains("k3a")) {
+      kernel = &k3a[0][0];
+      ksize_x = ksize_y = 3;
+   } 
+   else if (opt.Contains("k3b")) {
+      kernel = &k3b[0][0];
+      ksize_x = ksize_y = 3;
+   } 
+   else return 1.;
+
+   // Kernel tail sizes (kernel sizes must be odd for this to work!) 
+   Int_t x_push = (ksize_x-1)/2;
+   Int_t y_push = (ksize_y-1)/2; 
+
+   Int_t norm=0;
+   for(int i=0; i<ksize_x; i++)
+     for(int j=0; j<ksize_y; j++) norm += kernel[i*ksize_y +j];
+
+   int nx = NX(), ny= NY();
+
+   EdbH2 buf( *((EdbH2*)this) );
+
+   Long_t content;
+   int bin=0, k=0;
+
+   for (int i=0; i<nx; i++){             // input hist
+     for (int j=0; j<=ny; j++) { 
+       
+       content = 0;
+       for (int n=0; n<ksize_x; n++) {          // kernel
+	 for (int m=0; m<ksize_y; m++) { 
+	   Int_t xb = i+(n-x_push);
+	   Int_t yb = j+(m-y_push); 
+	   bin = buf.Bin(xb,yb);                      // out of dimensions - return 0;
+	   if (!bin) continue;
+	   k = kernel[n*ksize_y +m];
+	   if (!k) continue;
+	   content += k*bin;
+	 }
+       }
+       //SetBin( i, j, Nint(1.*content/norm) );
+       SetBin( i, j, content );
+     }
+   }
+   eNorm = (float)norm; 
+   return eNorm;
+}
+
+//____________________________________________________________________________________
+TH1F *EdbPeak2::DrawSpectrumN(const char *name, const char *title)
+{
+  int   nbin = MaxBin()+1;
+  float max = 1.*MaxBin()/eNorm;
+  TH1F *h = new TH1F(name, title, nbin,0,max);
+  for(int i=0; i<eNcell; i++)    h->Fill( eNC[i]/eNorm );
+  return h;
+}
+
+//____________________________________________________________________________________
+TH2F *EdbPeak2::DrawH2N(const char *name, const char *title)
+{
+  TObject *obj=0;
+  if((obj=gDirectory->FindObject(name))) delete obj;
+  TH2F *h = new TH2F(name, title, eN[0],eMin[0],eMax[0],eN[1],eMin[1],eMax[1]);
+  for(int i=0; i<eN[0]; i++)
+    for(int j=0; j<eN[1]; j++)
+      h->Fill( X(i), Y(j), Bin(i,j)/eNorm );
+  return h;
+}
 
 //____________________________________________________________________________
 void EdbPeak2::Delete()
@@ -268,9 +380,11 @@ void EdbPeak2::Init( const EdbH2 &h, int npeaks )
 void EdbPeak2::InitPeaks( int npeaks )
 {
   eNpeaks=0;
-  ePeak.Set(npeaks);  ePeak.Reset(0);
-  eMean3.Set(npeaks); eMean3.Reset(0);
-  eMean.Set(npeaks);  eMean.Reset(0);
+  ePeak.Set(npeaks);   ePeak.Reset(0);
+  eMean3.Set(npeaks);  eMean3.Reset(0);
+  eMean.Set(npeaks);   eMean.Reset(0);
+  eXpeak.Set(npeaks);  eXpeak.Reset(0);
+  eYpeak.Set(npeaks);  eYpeak.Reset(0);
   eNorm = 1.;  // default norm factor;
 }
 
@@ -279,7 +393,7 @@ void EdbPeak2::Print()
 {
   printf("%d peaks:\n", eNpeaks);
   for(int i=0; i<eNpeaks; i++) 
-	  printf("%d :  %f %f %f \n", i, ePeak[i], eMean3[i], eMean[i]);
+	  printf("%d : %.1f %.1f %.1f %.1f %.1f \n", i, eXpeak[i], eYpeak[i], ePeak[i], eMean3[i], eMean[i]);
 }
 
 //____________________________________________________________________________
@@ -331,6 +445,8 @@ float EdbPeak2::ProbPeak(int iv[2], int ir[2])
   float meanNeib   = 1.*(Integral(iv,ir) - npeak)/(nbinPeak-1);
   float meanNoPeak = 1.*(Integral() - Integral(iv,ir))/(Ncell()-nbinPeak);
   Log(3,"ProbPeak","found at (%3d %3d): %4d  %6.3f  %6.3f", iv[0],iv[1],npeak, meanNeib,meanNoPeak);
+  eXpeak[eNpeaks] = X(iv[0]);
+  eYpeak[eNpeaks] = Y(iv[1]);
   ePeak[eNpeaks]  = npeak;
   eMean3[eNpeaks] = meanNeib;
   eMean[eNpeaks]  = meanNoPeak;
@@ -479,98 +595,6 @@ float EdbPeak2::FindGlobalPeak(float &x, float &y, float ratio)
   Log(3,"EdbPeak2::FindGlobalPeak","of volume %8.2f at %10.2f %10.2f using %d bins", 
       peakvolume,x,y, n-nwipe );
   return peakvolume;
-}
-
-//______________________________________________________________________________
-float EdbPeak2::Smooth(Option_t *option)
-{
-   // Smooth bin contents of this 2-d histogram using kernel algorithms
-   // similar to the ones used in the raster graphics community.
-   // Bin contents in the active range are replaced by their smooth values.
-   //
-   // This code is copied from root_5.22 mainly to not depend on the newest root versions
-   // Adopted to fedra by VT
-   // to speedup processing do all calculations as integer, so the histogram do not normalised at output
-   // return value - norm-factor of the kernel
-
-   if(NX()<1||NY()<1)  return 1.;
-
-   Int_t k5a[5][5] =  { { 0, 0, 1, 0, 0 }, 
-			{ 0, 2, 2, 2, 0 }, 
-			{ 1, 2, 5, 2, 1 }, 
-			{ 0, 2, 2, 2, 0 }, 
-			{ 0, 0, 1, 0, 0 } };   // norm = 25
-   Int_t k5b[5][5] =  { { 0, 1, 2, 1, 0 },
-			{ 1, 2, 4, 2, 1 },
-			{ 2, 4, 8, 4, 2 },
-			{ 1, 2, 4, 2, 1 },
-			{ 0, 1, 2, 1, 0 } };
-   Int_t k3a[3][3] =  { { 0, 1, 0 },
-			{ 1, 2, 1 },
-			{ 0, 1, 0 } };      // norm = 6
-   Int_t k3b[3][3] =  { { 1, 2, 1 },        //gauss smoothing
-			{ 2, 4, 2 },
-			{ 1, 2, 1 } };      // norm = 16
-
-   Int_t ksize_x, ksize_y;
-   TString opt = option;
-   opt.ToLower();
-   Int_t *kernel = &k5a[0][0];
-   if (opt.Contains("k5a")) {
-     kernel = &k5a[0][0];
-     ksize_x = ksize_y = 5;
-   }
-   else if (opt.Contains("k5b")) {
-     kernel = &k5b[0][0];
-     ksize_x = ksize_y = 5;
-   }
-   else if (opt.Contains("k3a")) {
-      kernel = &k3a[0][0];
-      ksize_x = ksize_y = 3;
-   } 
-   else if (opt.Contains("k3b")) {
-      kernel = &k3b[0][0];
-      ksize_x = ksize_y = 3;
-   } 
-   else return 1.;
-
-   // Kernel tail sizes (kernel sizes must be odd for this to work!) 
-   Int_t x_push = (ksize_x-1)/2;
-   Int_t y_push = (ksize_y-1)/2; 
-
-   Int_t norm=0;
-   for(int i=0; i<ksize_x; i++)
-     for(int j=0; j<ksize_y; j++) norm += kernel[i*ksize_y +j];
-
-   int nx = NX(), ny= NY();
-
-   EdbH2 buf( *((EdbH2*)this) );
-
-   Long_t content;
-   int bin=0, k=0;
-
-   for (int i=0; i<nx; i++){             // input hist
-     for (int j=0; j<=ny; j++) { 
-       
-       content = 0;
-       for (int n=0; n<ksize_x; n++) {          // kernel
-	 for (int m=0; m<ksize_y; m++) { 
-	   Int_t xb = i+(n-x_push);
-	   Int_t yb = j+(m-y_push); 
-	   bin = buf.Bin(xb,yb);                      // out of dimensions - return 0;
-	   if (!bin) continue;
-	   k = kernel[n*ksize_y +m];
-	   if (!k) continue;
-	   content += k*bin;
-	 }
-       }
-       //SetBin( i, j, Nint(1.*content/norm) );
-       SetBin( i, j, content );
-     } 
-   } 
-
-   eNorm = (float)norm; 
-   return eNorm;
 }
 
 //____________________________________________________________________________
