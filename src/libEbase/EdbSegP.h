@@ -70,6 +70,8 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void    MergeTo( EdbSegP &s );
   Float_t ProbLink( EdbSegP &s1, EdbSegP &s2 );
   bool    IsCompatible(EdbSegP &s, float nsigx, float nsigt) const;
+  bool    IsInside(float xmin, float xmax, float ymin, float ymax) const;
+  bool    IsInside(float xmin, float xmax, float ymin, float ymax, float zmin, float zmax) const;
 
   void    addEMULDigit(TObject* a) {
     if(!eEMULDigitArray) eEMULDigitArray = new TRefArray();

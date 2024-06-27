@@ -296,6 +296,33 @@ void EdbSegP::PropagateTo( float z )
 }
 
 //______________________________________________________________________________
+bool EdbSegP::IsInside( float xmin, float xmax, float ymin, float ymax ) const
+{
+  if(xmax<xmin) return false;
+  if(ymax<ymin) return false;
+  if(eX<xmin)   return false;
+  if(eX>xmax)   return false;
+  if(eY<ymin)   return false;
+  if(eY>ymax)   return false;
+  return true;
+}
+
+//______________________________________________________________________________
+bool EdbSegP::IsInside( float xmin, float xmax, float ymin, float ymax, float zmin, float zmax ) const
+{
+  if(xmax<xmin) return false;
+  if(ymax<ymin) return false;
+  if(zmax<zmin) return false;
+  if(eX<xmin)   return false;
+  if(eX>xmax)   return false;
+  if(eY<ymin)   return false;
+  if(eY>ymax)   return false;
+  if(eZ<zmin)   return false;
+  if(eZ>zmax)   return false;
+  return true;
+}
+
+//______________________________________________________________________________
 bool EdbSegP::IsCompatible( EdbSegP &s, float nsigx, float nsigt ) const
 {
   // return true if segments are closer then nsig sigma in all coordinates
