@@ -894,23 +894,29 @@ void  EdbAlignmentV::DefineGuessCell( float xmin1, float xmax1, float ymin1, flo
 void  EdbAlignmentV::FillGuessCell( EdbPattern &p1, EdbPattern &p2, float binOK, float offsetMax)
 {
   // binOK - is the mean number of entries requested per bin
-
+  
   float xmin1=Xmin(0,p1), ymin1=Ymin(0,p1), xmax1=Xmax(0,p1), ymax1=Ymax(0,p1);
   float xmin2=Xmin(1,p2), ymin2=Ymin(1,p2), xmax2=Xmax(1,p2), ymax2=Ymax(1,p2);
   Log(3, "FillGuessCell", "x1:(%f %f) y1:(%f %f)",xmin1,xmax1, ymin1, ymax1);
   Log(3, "FillGuessCell", "x2:(%f %f) y2:(%f %f)",xmin2,xmax2, ymin2, ymax2);
   ApplyLimitsOffset( xmin1, xmax1, xmin2, xmax2, offsetMax);
   ApplyLimitsOffset( ymin1, ymax1, ymin2, ymax2, offsetMax);
-  int np1 = p1.N(), np2 = p2.N();
-
-  DefineGuessCell( xmin1, xmax1, ymin1, ymax1, xmin2, xmax2, ymin2, ymax2, np1, np2, binOK);
-
-  FillCell( 0, p1 );
-  FillCell( 1, p2 );
-
-  if( Log(3, "FillGuessCell", "with patterns of %d %d  statistics:",np1,np2) ) {
-    ePC[0].PrintStat();
-    ePC[1].PrintStat();
+  if( xmax1<xmin1||ymax1<ymin1||xmax2<xmin2||ymax2<ymin2 ) {
+    Log(1, "FillGuessCell", "No any overlap! x1:(%f %f) y1:(%f %f)",xmin1,xmax1, ymin1, ymax1);
+    Log(1, "FillGuessCell", "No any overlap! x2:(%f %f) y2:(%f %f)",xmin2,xmax2, ymin2, ymax2);
+  } else
+  {
+    int np1 = p1.N(), np2 = p2.N();
+    
+    DefineGuessCell( xmin1, xmax1, ymin1, ymax1, xmin2, xmax2, ymin2, ymax2, np1, np2, binOK);
+    
+    FillCell( 0, p1 );
+    FillCell( 1, p2 );
+    
+    if( Log(3, "FillGuessCell", "with patterns of %d %d  statistics:",np1,np2) ) {
+      ePC[0].PrintStat();
+      ePC[1].PrintStat();
+    }
   }
 }
 
