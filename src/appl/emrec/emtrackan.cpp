@@ -11,6 +11,7 @@
 #include <TMath.h>
 #include <TRint.h>
 #include <TH1F.h>
+#include <TH3F.h>
 #include "EdbLog.h"
 #include "EdbScanProc.h"
 #include "EdbAlignmentV.h"
@@ -22,6 +23,7 @@
 using namespace std;
 using namespace TMath;
 
+void DoGlobalCorr3(EdbPVRec &ali, EdbScanSet &ss, TEnv &cenv);      // check mean plate offsets
 bool MakeCorrectionMap(EdbPVRec &ali, TEnv &cenv);
 void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv);
 void DoGlobalCorrV2(EdbPVRec &ali, TEnv &cenv);
@@ -41,6 +43,7 @@ void print_help_message()
   cout<< "\t\t -corraff    -  save corrections to set.root file\n";
   cout<< "\t\t -global     -  global corrections using long tracks to unbend the full set\n";
   cout<< "\t\t -globV2     -  global corrections using long tracks to unbend the full set NEW!\n";
+  cout<< "\t\t -glob3      -  position global corrections using triplets\n";
   cout<< "\t\t -momentum   -  tracks momentum estimation\n";
   cout<< "\t\t -divide=NxM -  divide set into into NxM zones and calculate local correction in each zone\n";
   cout<< "\t\t                the following tracking may use this correction if the parameter fedra.track.do_local_corr in track.rootrc is set to 1\n";
@@ -94,6 +97,7 @@ int main(int argc, char* argv[])
   
   bool do_global=false;
   bool do_globV2=false;
+  bool do_glob3=false;
   bool do_cmtest=false;
   
   for(int i=1; i<argc; i++ ) {
@@ -132,6 +136,10 @@ int main(int argc, char* argv[])
     {
       do_globV2=true;
     }
+    else if(!strncmp(key,"-glob3",6))
+    {
+      do_glob3=true;
+    }
     else if(!strncmp(key,"-cmtest",7))
     {
       do_cmtest=true;
@@ -157,6 +165,10 @@ int main(int argc, char* argv[])
   if(do_momentum)     CheckMom(ali,cenv);
   else if(do_global)  DoGlobalCorr(ali,cenv);
   else if(do_globV2)  DoGlobalCorrV2(ali,cenv);
+  else if(do_glob3)   {
+    EdbScanSet *ss = sproc.ReadScanSet(idset);
+    for(int i=0; i<5; i++) DoGlobalCorr3(ali, *ss, cenv);
+  }
   else if(do_cmtest)  MakeCorrectionMap_test(ali,cenv);
   else                MakeCorrectionMap(ali,cenv);
 
@@ -689,6 +701,139 @@ void DoGlobalCorrV2(EdbPVRec &ali, TEnv &cenv)
     }
   }
   if(do_corraff) if(ss) sproc.WriteScanSet(idset,*ss);
+}
+
+void FillEfficiency( int plate, EdbSegP *s1, EdbSegP *s2, EdbSegP *s3, float lm[4], TH2F &h13, TH2F &h2 )
+{
+  if(s1&&s3) 
+    if(s1->IsInside(lm[0],lm[1],lm[2],lm[3]) && s3->IsInside(lm[0],lm[1],lm[2],lm[3]) )
+    {
+      h13.Fill( plate, (s3->Theta()+s1->Theta())/2.);
+      if(s2) if(s2->IsInside(lm[0],lm[1],lm[2],lm[3]) )
+	h2.Fill( plate, s2->Theta() );
+    }
+}
+
+//------------------------------------------------------------------------------
+void DoGlobalCorr3(EdbPVRec &ali, EdbScanSet &ss, TEnv &cenv)
+{
+  bool doZcorr    = cenv.GetValue("trackan.global.doZcorr"         , 1);
+  bool doAng = true;
+  
+  int ntr  = ali.Ntracks();
+  int npat = ali.Npatterns();
+  Log(2,"DoGlobalCorr3","with %d tracks and %d patterns",ntr, npat);
+  if(npat<3) return;
+  
+  TH3F hdxyp("hdxyp","triplet position residuals", 150,-15,15, 150,-15,15,  57,0.5,57.5 );
+  TH3F hdtxtyp("hdtxtyp","triplet angular residuals", 150,-0.015,0.015, 150,-0.015,0.015,  57,0.5,57.5 );
+  TH2F h2theta13("h2theta13","theta plates 1 3", 57,0.5,57.5, 100, 0., 1.);
+  TH2F h2theta2("h2theta2","theta plate 2", 57,0.5,57.5, 100, 0., 1.);
+  
+  for( int ipat=0; ipat<npat-2; ipat++ )
+  {
+    int id1=ipat;
+    int id2=ipat+1;
+    int id3=ipat+2;
+    
+    EdbPattern *p1 = ali.GetPattern(id1);  p1->SetPID(id1);
+    EdbPattern *p2 = ali.GetPattern(id2);  p2->SetPID(id2);
+    EdbPattern *p3 = ali.GetPattern(id3);  p3->SetPID(id3);
+    
+    float lm[4] = { 
+      Max(Max( p1->Xmin(), p2->Xmin()), p3->Xmin()), 
+      Min(Min( p1->Xmax(), p2->Xmax()), p3->Xmax() ), 
+      Max(Max( p1->Ymin(), p2->Ymin()), p3->Ymin() ), 
+      Min(Min( p1->Ymax(), p2->Ymax()), p3->Ymax() )
+    };
+    
+    TObjArray p1corr;
+    TObjArray p2corr;
+    TObjArray p3corr;
+    int ncp=0;
+    for(int itr=0; itr<ntr; itr++) {
+      EdbTrackP *t = ali.GetTrack(itr);
+      //if(trFlag!=0) if( trFlag!=t->Flag() )  continue;
+      EdbSegP *s1=0, *s2=0, *s3=0;
+      for(int j=0; j<t->N(); j++) {
+	EdbSegP *s  = t->GetSegment(j);
+	if(s->PID()==p1->PID()) s1=s;
+	if(s->PID()==p2->PID()) s2=s;
+	if(s->PID()==p3->PID()) s3=s;
+      }
+      if(s1&&s2&&s3) { p1corr.Add(s1); p2corr.Add(s2); p3corr.Add(s3); ncp++; }
+      FillEfficiency( p2->ScanID().ePlate, s1,s2,s3, lm, h2theta13, h2theta2 );
+    }
+    
+    TObjArray p13corr; 
+    p13corr.SetOwner();
+    for(int i=0; i<ncp; i++)
+    {
+      EdbSegP *s1 = ((EdbSegP *)(p1corr.At(i)));
+      EdbSegP *s2 = ((EdbSegP *)(p2corr.At(i)));
+      EdbSegP *s3 = ((EdbSegP *)(p3corr.At(i)));
+      EdbSegP *s  = new EdbSegP( *s2 );
+      float r = (s2->Z()-s1->Z())/(s3->Z()-s1->Z());
+      s->SetX( s1->X() + (s3->X()-s1->X())*r );
+      s->SetY( s1->Y() + (s3->Y()-s1->Y())*r );
+      s->SetTX( (s3->X()-s1->X())/(s3->Z()-s1->Z()) );
+      s->SetTY( (s3->Y()-s1->Y())/(s3->Z()-s1->Z()) );
+      p13corr.Add(s);
+    }
+    
+    printf("ipat: %d  plate: %d pid: %d  z: %.1f    N3 = %d\n", ipat, p2->ScanID().ePlate, p2->PID(), p2->Z(), ncp );
+    for(int i=0; i<ncp; i++)
+    {
+      EdbSegP *s2  = ((EdbSegP*)(p2corr.At(i)));
+      EdbSegP *s13 = ((EdbSegP*)(p13corr.At(i)));
+      hdxyp.Fill( s13->X()-s2->X(), s13->Y()-s2->Y(),  (float)(s2->ScanID().ePlate) );
+      hdtxtyp.Fill( s13->TX()-s2->TX(), s13->TY()-s2->TY(),  (float)(s2->ScanID().ePlate) );
+    }
+    
+    EdbAlignmentV al;
+    for(int i=0; i<ncp; i++)
+    {
+      al.eS[0].Add(p2corr.At(i));
+      al.eS[1].Add(p13corr.At(i));
+    }
+    
+    EdbAffine2D aff2XYcum; 
+    EdbAffine2D aff2TXTYcum;
+    float dz02corr=0;
+    float z02set=(p3->Z()+p1->Z())/2.;
+    
+    for(int iter=0; iter<3; iter++) {
+      printf("***** iter %d\n",iter);
+      
+      EdbAffine2D aff1to2XY;
+      al.CalculateAffXY( al.eS[0], al.eS[1], aff1to2XY);
+      aff1to2XY.Print();
+      p2->Transform(&aff1to2XY);
+      aff2XYcum.Transform(&aff1to2XY);
+      
+      if(doAng) {
+	EdbAffine2D aff1to2TXTY;
+	al.CalculateAffTXTY( al.eS[0], al.eS[1], aff1to2TXTY);
+	aff1to2TXTY.Print();
+	p2->TransformA(&aff1to2TXTY);
+	aff2TXTYcum.Transform(&aff1to2TXTY);
+      }
+    }
+    
+    EdbPlateP *plate2 = ss.GetPlate( p2->ScanID().ePlate );
+    if(doAng) plate2->GetAffineTXTY()->Transform(&aff2TXTYcum);
+    plate2->GetAffineXY()->Transform(&aff2XYcum);
+  }
+  
+  TFile faa("aa.root","UPDATE");
+  hdxyp.Write();
+  hdtxtyp.Write();
+  h2theta13.Write();
+  h2theta2.Write();
+  faa.Close();
+  
+  if(do_corraff) sproc.WriteScanSet(idset,ss);
+  
 }
 
 //---------------------------------------------------------------------------
