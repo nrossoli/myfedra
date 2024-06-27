@@ -323,11 +323,11 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
   return prob;
 }
   
-  //--------------------------------------------------------------------------------------
-  EdbTrackP *EdbTrackAssembler::AddSegmentAsTrack(EdbSegP &s)
+//--------------------------------------------------------------------------------------
+EdbTrackP *EdbTrackAssembler::AddSegmentAsTrack(EdbSegP &s)
 {
-  if(s.W()<16    )  return 0;
-  if(s.Chi2()>2.5)  return 0;
+  //if(s.W()<16    )  return 0;
+  //if(s.Chi2()>2.5)  return 0;
   EdbTrackP *t = new EdbTrackP( eSegments.AddSegment(s), 0.139);    // EdbTrackAssembler is owner of segments
   s.SetTrack(0);
   eTracks.Add(t);
