@@ -187,14 +187,17 @@ void EdbMosaicAl::AlignSpot(TObjArray &parr, EdbMosaicPath &mp)
   for(int i=1; i<nh; i++)
   {
     EdbPattern *p = (EdbPattern *)(parr.At(mp.I(i)));
-    TArrayI narr(10);
-    int nb = mp.GetAlignedNeighbours( mp.I(i), narr );
-    EdbPattern  alp;
-    for(int ii=0; ii<nb; ii++) {
-      alp.AddPattern(*(EdbPattern *)(parr.At(narr[ii])) );
-    }
-    printf("align %d -> %d  at dist %.1f \n",p->N(), alp.N(), mp.Dist(mp.I(i)) );
-    if( ViewSideAl0(*p, alp) > eMinPeak ) mp.SetOK( mp.I(i) );
+    if(p->N() >= eMinPeak) {
+      TArrayI narr(10);
+      int nb = mp.GetAlignedNeighbours( mp.I(i), narr );
+      if(nb>10) { Log(1,"EdbMosaicAl::AlignSpot","too many neigbours! %d ", nb ); nb=10;}
+      EdbPattern  alp;
+      for(int ii=0; ii<nb; ii++) {
+        alp.AddPattern(*(EdbPattern *)(parr.At(narr[ii])) );
+      }
+      printf("align %d -> %d  at dist %.1f \n",p->N(), alp.N(), mp.Dist(mp.I(i)) );
+      if( ViewSideAl0(*p, alp) > eMinPeak ) mp.SetOK( mp.I(i) );
+    } else Log(2,"EdbMosaicAl::AlignSpot","skip view with %d segments", p->N() );
   }  
 }
 
@@ -288,7 +291,7 @@ void EdbMosaicAl::FormFragments( float fx, float fy, TObjArray &harr )
       a->Add(h);
       eCF[iside].Fill(h->GetXview(), h->GetYview());
     }
-    eCF[iside].PrintStat();
+    //eCF[iside].PrintStat();
   }
 
 }

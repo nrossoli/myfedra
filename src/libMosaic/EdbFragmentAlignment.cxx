@@ -115,7 +115,6 @@ float EdbFragmentAlignment::CheckScaleX( float y0 )
   mp.eR0 = 800;
   EdbAffine2D aff;
   CheckScale(mp,aff);
-  aff.Print();
   return (length-aff.B1())/length;
 }
 
@@ -127,7 +126,6 @@ float EdbFragmentAlignment::CheckScaleY( float x0 )
   mp.eR0 = 800;
   EdbAffine2D aff;
   CheckScale(mp,aff);
-  aff.Print();
   return (length-aff.B2())/length;
 }
 

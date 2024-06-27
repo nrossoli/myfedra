@@ -19,12 +19,28 @@ void EdbMosaicIO::Init( const char *file, Option_t* option)
 }
 
 //-----------------------------------------------------------------------
+char *EdbMosaicIO::FileName(int brick, int plate, int major, int minor, const char *pref, const char *suff)
+{
+  return Form("p%3.3d/%s%d.%d.%d.%d%s",plate,pref,brick,plate,major,minor,suff);
+}
+
+//-----------------------------------------------------------------------
 void EdbMosaicIO::SaveFragment(EdbPattern &p)
 {
   if(eFile) 
   {
     eFile->cd();
     p.Write( Form("p%d_%d_%d", p.Plate(), p.Side(), p.ID() ) );
+  }
+}
+
+//-----------------------------------------------------------------------
+void EdbMosaicIO::SaveFragmentTag(TObject *ob, int plate, int side, int id, const char *pref)
+{
+  if(eFile) 
+  {
+    eFile->cd();
+    ob->Write( Form("%s%d_%d_%d", pref,plate, side, id) );
   }
 }
 
@@ -38,6 +54,8 @@ EdbPattern *EdbMosaicIO::GetFragment(int plate, int side, int id, bool do_corr )
   if(eFile)
   {
     EdbPattern *p = (EdbPattern *)(eFile->Get( name ));
+    p->SetSide(side);
+    p->SetID(id);
     if(do_corr) 
       if(l) 
       {

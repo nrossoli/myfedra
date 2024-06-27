@@ -24,10 +24,14 @@ class EdbMosaicIO : public TObject {
     void Init(const char *file, Option_t* option = "");
     void SaveFragment(EdbPattern &p);
     EdbPattern *GetFragment( int plate, int side, int id, bool do_corr );
+    
+    void SaveFragmentTag(TObject *ob, int plate, int side, int id, const char *pref);
 
     void SaveCorrMap( int plate, int side, EdbLayer &l, const char *file);
     void SaveCorrMap( int plate, int side, EdbLayer &l );
     EdbLayer *GetCorrMap( int plate, int side );
+    
+    char *FileName(int brick, int plate, int major, int minor, const char *pref="", const char *suff="");
 
     void DrawFragment(EdbPattern &p);
 
