@@ -72,6 +72,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
 
   void      SetSegmentsZ();
   void      SetSegmentsDZ(float dz);
+  void      SetSegmentsW(float w);
 
   void      SetSegmentsPlate(int plate);
 
@@ -327,6 +328,7 @@ class EdbPattern : public EdbSegmentsBox {
 
   EdbID      ScanID() const {return eScanID;}
   Int_t      Plate() const {return eScanID.ePlate;}
+  Int_t      Brick() const {return eScanID.eBrick;}
   Int_t      Side()  const {return eSide;}
 
   ClassDef(EdbPattern,2)  // pattern of segments
