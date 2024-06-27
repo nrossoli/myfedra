@@ -493,9 +493,12 @@ Int_t EdbAffine2D::CalculateTurn(int n, float *x0, float *y0, float *x1, float *
       d += x1[i] * (Y - y0[i]) + y1[i] * (x0[i] - X);
       e += x1[i] * Y_ - y1[i] * X_;
     }
-		
-    teta1 = TMath::ASin((e*f-d*TMath::Sqrt(sqr(f)+sqr(d)-sqr(e)))/(sqr(f)+sqr(d)));
-    teta2 = TMath::Pi() - TMath::ASin((e*f+d*TMath::Sqrt(sqr(f)+sqr(d)-sqr(e)))/(sqr(f)+sqr(d)));
+
+    Double_t det=sqr(f)+sqr(d);
+    if ( (sqr(f)+sqr(d)) < 0.0000000001 )  { Log(1,"EdbAffine2D::CalculateTurn","determinant is too small: %g",det);  return 0; }
+
+    teta1 = TMath::ASin((e*f-d*TMath::Sqrt(sqr(f)+sqr(d)-sqr(e)))/(det));
+    teta2 = TMath::Pi() - TMath::ASin((e*f+d*TMath::Sqrt(sqr(f)+sqr(d)-sqr(e)))/(det));
 
     a1 = X + Y_*TMath::Sin(teta1) - X_*TMath::Cos(teta1);
     b1 = Y - Y_*TMath::Cos(teta1) - X_*TMath::Sin(teta1);
