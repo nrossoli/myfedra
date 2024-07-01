@@ -145,6 +145,11 @@ void EdbFragmentAlignment::AlignAndShift( EdbMosaicPath &mp )
     EdbPattern *p = GetPattern(mp.I(i));
     TArrayI narr(10);
     int nb = mp.GetAlignedNeighbours( mp.I(i), narr );
+    if(nb>10) 
+    { 
+      Log(1,"EdbFragmentAlignment::AlignAndShift","Warning! too many neigbours: %d  in dr = %f  reset to 10",nb, mp.eR0);
+      nb=10;
+    }
     EdbPattern  alp;
     for(int ii=0; ii<nb; ii++) {
       alp.AddPattern( *GetPattern(narr[ii]) );
