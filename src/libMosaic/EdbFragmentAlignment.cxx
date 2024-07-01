@@ -54,36 +54,17 @@ void EdbFragmentAlignment::AlignFragment( EdbPattern &pf )
   EdbMosaicPath mp(eN);
   mp.eR0=1200;
   EdbViewHeader *h = mp.FindNearest( eHarr, pf.X(), pf.Y() );
-  mp.InitArea( eHarr, h->GetXview(), h->GetYview() );
-
-  Log(1,"EdbFragmentAlignment::AlignFragment","with %d views at x0,y0 was %f %f:   %f %f",
-      eN,h->GetXview(), h->GetYview(), pf.X(), pf.Y() );
-  
-/*
-  float xh0 = mp.GetHeader(mp.I(0))->GetXview();
-  float yh0 = mp.GetHeader(mp.I(0))->GetYview();
-  
-  float kx = CheckScaleX( yh0 );
-  float ky = CheckScaleY( xh0 );
-  printf( "CheckScale %f %f\n", kx,ky);
-  eAff.Set( eAff.A11()*kx, eAff.A12()*kx,
-	    eAff.A21()*ky, eAff.A22()*ky,
-    	    eAff.B1()    , eAff.B2()  );  // do not scale offset...
-
-  eAff.Print();
-  ApplyAff();
-
-  kx = CheckScaleX( yh0 );
-  ky = CheckScaleY( xh0 );
-  printf( "CheckScale2 %f %f\n", kx,ky);
- */
-  
-  AlignAndShift( mp );
-
-  //eAff.Calculate(eVC,eVC0);                     // from found to original
-  //printf("\n\nGlobal trans: ");    eAff.Print();
-  //ApplyAff();
-  
+  if(h) {
+    Log(1,"EdbFragmentAlignment::AlignFragment","with %d views at x0,y0 was %f %f:   %f %f",
+	eN,h->GetXview(), h->GetYview(), pf.X(), pf.Y() );
+    mp.InitArea( eHarr, h->GetXview(), h->GetYview() );
+  }
+  else {
+    Log(1,"EdbFragmentAlignment::AlignFragment","Warning! central view close to (%f %f) was not found!",pf.X(), pf.Y());
+    mp.InitArea( eHarr, pf.X(), pf.Y() );
+  }
+    
+  AlignAndShift( mp );  
   AlignAndShift( mp );
  
   for(int i=0; i<eN; i++)
