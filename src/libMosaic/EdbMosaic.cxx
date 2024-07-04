@@ -19,6 +19,25 @@ using namespace TMath;
 ClassImp(EdbMosaicAl);
 
 //-----------------------------------------------------------------------
+EdbMosaicAl::EdbMosaicAl()
+{
+  eCorrMap[0]=eCorrMap[1]=eCorrMap[2]=0;
+  eH_XY[0] = 0;
+  eH_XY[1] = new TH2F("hxy1","xy side 1",2000,0,200000, 2000, 0,200000);
+  eH_XY[2] = new TH2F("hxy2","xy side 2",2000,0,200000, 2000, 0,200000);
+}
+
+//-----------------------------------------------------------------------
+EdbMosaicAl::~EdbMosaicAl()
+{
+  for(int i=0; i<3; i++) 
+  {
+    if(eCorrMap[i]) delete eCorrMap[i];
+    if(eH_XY[i])    delete eH_XY[i];
+  }
+}
+
+//-----------------------------------------------------------------------
 void EdbMosaicAl::ProcRun( EdbID id, const TEnv &env )
 {
   EdbID idset =id; idset.ePlate =0;
@@ -59,6 +78,9 @@ void EdbMosaicAl::ProcRun( EdbID id, const TEnv &env )
 
   if(eCorrMap[1]) eMIO.SaveCorrMap(id.ePlate, 1, *eCorrMap[1]);
   if(eCorrMap[2]) eMIO.SaveCorrMap(id.ePlate, 2, *eCorrMap[2]);
+
+  if(eH_XY[1]) eMIO.SaveSideObj( eH_XY[1], id.ePlate, 1, "hxy_" );
+  if(eH_XY[2]) eMIO.SaveSideObj( eH_XY[2], id.ePlate, 2, "hxy_" );
 }
 
 //-----------------------------------------------------------------------
@@ -113,11 +135,23 @@ void EdbMosaicAl::AlignFragments()
 	fa.eAP=eAP;
 	fa.AlignFragment(pf);
 	fa.FillVDT(vdt);
+	FillHXY( pf, *(eH_XY[side]) );
 	eMIO.SaveFragment( pf );
       }
     }
   }
   vdt.SaveTree();
+}
+
+//-----------------------------------------------------------------------
+void EdbMosaicAl::FillHXY( const EdbPattern &pf, TH2F &h )
+{
+  int n=pf.N();
+  for(int i=0; i<n; i++) 
+  {
+    EdbSegP *s = pf.GetSegment(i);
+    h.Fill(s->eX,s->eY);
+  }
 }
 
 //-----------------------------------------------------------------------
@@ -147,7 +181,7 @@ void EdbMosaicAl::AlignFragment( EdbPattern &pf, TObjArray &harr )
   int nh = harr.GetEntries();  
   EdbMosaicPath mp(nh);
   mp.eR0=1200;
-  mp.InitArea(harr, pf.X(), pf.Y() );
+  mp.InitArea(harr, pf.X(), pf.Y(), eMinPeak );
 
   Log(1,"EdbMosaicAl::AlignFragment","with %d views at x0,y0:   %f %f",nh,mp.eX0,mp.eY0);
 

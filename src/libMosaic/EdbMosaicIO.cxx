@@ -35,12 +35,22 @@ void EdbMosaicIO::SaveFragment(EdbPattern &p)
 }
 
 //-----------------------------------------------------------------------
-void EdbMosaicIO::SaveFragmentTag(TObject *ob, int plate, int side, int id, const char *pref)
+void EdbMosaicIO::SaveFragmentObj(TObject *ob, int plate, int side, int id, const char *pref)
 {
   if(eFile) 
   {
     eFile->cd();
-    ob->Write( Form("%s%d_%d_%d", pref,plate, side, id) );
+    ob->Write( Form("%s%d_%d_%d", pref, plate, side, id) );
+  }
+}
+
+//-----------------------------------------------------------------------
+void EdbMosaicIO::SaveSideObj(TObject *ob, int plate, int side, const char *pref)
+{
+  if(eFile) 
+  {
+    eFile->cd();
+    ob->Write( Form("%s%d_%d", pref, plate, side) );
   }
 }
 

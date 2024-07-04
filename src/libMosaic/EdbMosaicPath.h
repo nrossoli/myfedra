@@ -35,7 +35,7 @@ class EdbMosaicPath : public TObject {
 
    EdbViewHeader *GetHeader(int i)  const { return (EdbViewHeader *)(eHarr.At(i)); }
    EdbViewHeader *FindNearest( const TObjArray &harr, const float x0, const float y0 );
-   void    InitArea(const TObjArray &harr, const float x0, const float y0);
+   void    InitArea(const TObjArray &harr, const float x0, const float y0, int nsegmin);
    float   InitLineX(const TObjArray &harr, const float y0, const float dy);
    float   InitLineY(const TObjArray &harr, const float x0, const float dx);
    void    SetOK( const int i) { eOK[i]++; }

@@ -23,7 +23,7 @@ int EdbMosaicPath::GetAlignedNeighbours(const int i0, TArrayI &list) const
   // for a given view return list of already aligned neighbours
   EdbViewHeader *h0 = (EdbViewHeader *)(eHarr.At(i0));
   int n=0;
-  for(int i=0; i<eN0; i++)
+  for(int i=0; i<eN; i++)
   {
     if(eOK[i]) {
       EdbViewHeader *h=(EdbViewHeader *)(eHarr.At(i));
@@ -100,20 +100,26 @@ EdbViewHeader *EdbMosaicPath::FindNearest( const TObjArray &harr, const float x0
 }
 
 //-----------------------------------------------------------------------
-void EdbMosaicPath::InitArea( const TObjArray &harr, const float x0, const float y0 )
+void EdbMosaicPath::InitArea( const TObjArray &harr, const float x0, const float y0, int nsegmin )
 {
   eX0 = x0;
   eY0 = y0;
   int n = harr.GetEntries();
   if(n>eN0) {Log(1,"EdbMosaicPath::InitArea","ERROR: array length %d > %d",n,eN0); return;}
-  eN0=n;
-  for(int i=0; i<eN0; i++)
+  int cnt=0;
+  for(int i=0; i<n; i++)
   {
     EdbViewHeader *h=(EdbViewHeader *)(harr.At(i));
-    eHarr.Add(h);
-    float dx = h->GetXview()-eX0;
-    float dy = h->GetYview()-eY0;
-    eDist[i] = Sqrt(dx*dx+dy*dy);
+    //if( h->GetNsegments() >= nsegmin )
+    if( 1 )
+    {
+      eHarr.AddAt(h,cnt);
+      float dx = h->GetXview()-eX0;
+      float dy = h->GetYview()-eY0;
+      eDist[cnt] = Sqrt(dx*dx+dy*dy);
+      cnt++;
+    }
   }
-  TMath::Sort(eN0,eDist.GetArray(),eInd.GetArray(),0);
+  eN=cnt;
+  TMath::Sort(eN,eDist.GetArray(),eInd.GetArray(),0);
 }

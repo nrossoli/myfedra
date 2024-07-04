@@ -57,16 +57,19 @@ void EdbFragmentAlignment::AlignFragment( EdbPattern &pf )
   if(h) {
     Log(1,"EdbFragmentAlignment::AlignFragment","with %d views at x0,y0 was %f %f:   %f %f",
 	eN,h->GetXview(), h->GetYview(), pf.X(), pf.Y() );
-    mp.InitArea( eHarr, h->GetXview(), h->GetYview() );
+    mp.InitArea( eHarr, h->GetXview(), h->GetYview(), eMinPeak );
   }
   else {
-    Log(1,"EdbFragmentAlignment::AlignFragment","Warning! central view close to (%f %f) was not found!",pf.X(), pf.Y());
-    mp.InitArea( eHarr, pf.X(), pf.Y() );
+    Log(1,"EdbFragmentAlignment::AlignFragment","Warning! central view close to (%f %f) was not found! abandon this fragment",pf.X(), pf.Y());
+    //mp.InitArea( eHarr, pf.X(), pf.Y(), eMinPeak );
+    return;
   }
     
   AlignAndShift( mp );  
+  RealignAndShift( mp );
   AlignAndShift( mp );
- 
+  RealignAndShift( mp );
+  
   for(int i=0; i<eN; i++)
   {
     if( mp.OK(i) )   pf.AddPattern( *GetPattern(i) );
@@ -121,6 +124,11 @@ void EdbFragmentAlignment::CheckScale( EdbMosaicPath &mp, EdbAffine2D &aff )
     EdbPattern *p = (EdbPattern *)(eParr.At(mp.I(i)));
     TArrayI narr(10);
     int nb = mp.GetAlignedNeighbours( mp.I(i), narr );
+    if(nb>10)
+    {
+      Log(1,"EdbFragmentAlignment::CheckScale","Warning! too many neigbours: %d  in dr = %f  reset to 10",nb, mp.eR0);
+      nb=10;
+    }
     EdbPattern  alp;
     for(int ii=0; ii<nb; ii++) {
       alp.AddPattern( *(EdbPattern *)(eParr.At(narr[ii])) );
@@ -139,6 +147,7 @@ void EdbFragmentAlignment::ApplyAff()
 //-------------------------------------------------------------------
 void EdbFragmentAlignment::AlignAndShift( EdbMosaicPath &mp )
 {
+  Log(1,"EdbFragmentAlignment::AlignAndShift","");
   mp.SetOK( mp.I(0) );
   for(int i=1; i<eN; i++)
   {
@@ -162,6 +171,39 @@ void EdbFragmentAlignment::AlignAndShift( EdbMosaicPath &mp )
     if( peak > eMinPeak )
     {
       mp.SetOK( mp.I(i) );
+      s->Transform(&aff);
+    }
+  }
+}
+
+//-------------------------------------------------------------------
+void EdbFragmentAlignment::RealignAndShift( EdbMosaicPath &mp )
+{
+  //assume that most of views were already aligned
+  Log(1,"EdbFragmentAlignment::RealignAndShift","");
+  for(int i=0; i<eN; i++)
+  {
+    if(mp.OK(i)) continue;
+    EdbPattern *p = GetPattern(i);
+    TArrayI narr(10);
+    int nb = mp.GetAlignedNeighbours( i, narr );
+    if(nb>10) 
+    { 
+      Log(1,"EdbFragmentAlignment::AlignAndShift","Warning! too many neigbours: %d  in dr = %f  reset to 10",nb, mp.eR0);
+      nb=10;
+    }
+    EdbPattern  alp;
+    for(int ii=0; ii<nb; ii++) {
+      alp.AddPattern( *GetPattern(narr[ii]) );
+    }
+    printf("align %d -> %d  at dist %.1f \n",p->N(), alp.N(), mp.Dist(i) );
+    EdbAffine2D aff;
+    int peak = ViewSideAl(*p, alp, aff, 1);
+    EdbSegP *s = eVC->GetSegment( i );
+    s->SetW(peak);
+    if( peak > eMinPeak )
+    {
+      mp.SetOK( i );
       s->Transform(&aff);
     }
   }

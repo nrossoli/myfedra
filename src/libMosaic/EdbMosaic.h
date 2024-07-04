@@ -33,10 +33,11 @@ class EdbMosaicAl : public TObject {
     
     int     eMinPeak;         // minimum coincidences to accept alignment
     AlPar   eAP;              // alignment parameters
+    TH2F   *eH_XY[3];         // global histograms after the alignments (only 1 and 2 for now)
    
   public:
-    EdbMosaicAl(){eCorrMap[0]=eCorrMap[1]=eCorrMap[2]=0;}
-    virtual ~EdbMosaicAl(){}
+    EdbMosaicAl(); //{eCorrMap[0]=eCorrMap[1]=eCorrMap[2]=0;}
+    virtual ~EdbMosaicAl();
     
     void FormFragments( float fx, float fy, TObjArray &harr );
     void AlignFragments();
@@ -49,6 +50,7 @@ class EdbMosaicAl : public TObject {
     void ReadPatterns( EdbFragmentAlignment &fa );
     void SetAlPar( EdbFragmentAlignment &fa );
     void SetAlPar( const TEnv &env, AlPar &ap );
+    void FillHXY( const EdbPattern &pf, TH2F &h );
     
     ClassDef(EdbMosaicAl,1)  //Mosaic alignment
 };

@@ -25,7 +25,8 @@ class EdbMosaicIO : public TObject {
     void SaveFragment(EdbPattern &p);
     EdbPattern *GetFragment( int plate, int side, int id, bool do_corr );
     
-    void SaveFragmentTag(TObject *ob, int plate, int side, int id, const char *pref);
+    void SaveFragmentObj(TObject *ob, int plate, int side, int id, const char *pref);
+    void SaveSideObj(TObject *ob, int plate, int side, const char *pref);
 
     void SaveCorrMap( int plate, int side, EdbLayer &l, const char *file);
     void SaveCorrMap( int plate, int side, EdbLayer &l );

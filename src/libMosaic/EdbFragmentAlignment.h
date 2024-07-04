@@ -75,6 +75,7 @@ class EdbFragmentAlignment : public TObject {
     void CheckScale( EdbMosaicPath &mp, EdbAffine2D &aff );
     void AlignFragment( EdbPattern &pf );
     void AlignAndShift( EdbMosaicPath &mp );
+    void RealignAndShift( EdbMosaicPath &mp );
     void FillVC();
     void FillVDT(EdbCouplesTree &vdt);
 
