@@ -179,7 +179,7 @@ void DrawOut(const EdbPattern &p, EdbMosaicIO &omio)
   pdb->cd(2);  gOH.dbltxty->Draw("colz");
   gStyle->SetOptStat("n");
 
-  if(do_save_canvas) omio.SaveFragmentTag( c, p.Plate(), p.Side(), p.ID(), "peaks");
+  if(do_save_canvas) omio.SaveFragmentObj( c, p.Plate(), p.Side(), p.ID(), "peaks");
   if(do_save_gif) c->Print( omio.FileName( p.Brick(), p.Plate(), 0, 0, "", ".gif+30") );
   delete c;
 }
@@ -209,7 +209,7 @@ void TagSide( EdbID id, int from, int nfrag, int side, TEnv &cenv, EdbMosaicIO &
       Pat2H2(*p, h2p);
       //printf("Integral = %d \n",h2p.Integral());
       //gOH.xy = h2p.DrawH2("h","original mt");
-      //omio.SaveFragmentTag( gOH.xy,  p->Plate(), p->Side(), p->ID(), "hxy");
+      //omio.SaveFragmentObj( gOH.xy,  p->Plate(), p->Side(), p->ID(), "hxy");
 
       EdbPattern ptag;      ptag.SetScanID(id); ptag.SetSide(side); ptag.SetID(i);
 
@@ -227,7 +227,7 @@ void TagSide( EdbID id, int from, int nfrag, int side, TEnv &cenv, EdbMosaicIO &
       delete p;      
     }
   }
-  omio.SaveFragmentTag( &gPat,	id.ePlate, side, 0, "gpat");
+  omio.SaveFragmentObj( &gPat,	id.ePlate, side, 0, "gpat");
 }
 
 void DoubletsFilterOut(EdbPattern &p, EdbMosaicIO &omio)
@@ -248,8 +248,8 @@ void DoubletsFilterOut(EdbPattern &p, EdbMosaicIO &omio)
   adup.FillCombinations();
   adup.DoubletsFilterOut(checkview, gOH.dblxy, gOH.dbltxty);   // assign flag -10 to the duplicated segments
   
-  //omio.SaveFragmentTag(   hxy, p.Plate(), p.Side(), p.ID(), "dblxy");
-  //omio.SaveFragmentTag( htxty, p.Plate(), p.Side(), p.ID(), "dbltxty");
+  //omio.SaveFragmentObj(   hxy, p.Plate(), p.Side(), p.ID(), "dblxy");
+  //omio.SaveFragmentObj( htxty, p.Plate(), p.Side(), p.ID(), "dbltxty");
 
   //if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets");
   //SafeDelete(hxy);

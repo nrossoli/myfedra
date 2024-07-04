@@ -18,7 +18,7 @@
 using namespace std;
 using namespace TMath;
 int  AlignToBeam( EdbID id, TEnv &env );
-bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2);
+bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, float offMax);
 
 void print_help_message()
 {
@@ -188,7 +188,9 @@ int AlignToBeam( EdbID id, TEnv &cenv )
     EdbPattern *p2 = mio.GetFragment( id.ePlate, 2, i, use_saved_alignment ); //get side 2
     p1->SetScanID(id);
     p2->SetScanID(id);
-    AlignFragmentToBeam0(*p2, *p1, *l2,*l1);  //align 2 to 1 using parallel beam tracks
+    AlignFragmentToBeam0(*p2, *p1, *l2,*l1, 10);  //align 2 to 1 using parallel beam tracks
+    AlignFragmentToBeam0(*p2, *p1, *l2,*l1, 5);  //align 2 to 1 using parallel beam tracks
+    AlignFragmentToBeam0(*p2, *p1, *l2,*l1, 3);  //align 2 to 1 using parallel beam tracks
     delete p1;
     delete p2;
    }
@@ -207,7 +209,7 @@ int AlignToBeam( EdbID id, TEnv &cenv )
 }
 
 //-----------------------------------------------------------------------
-bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2)
+bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, float offMax)
 {
   // Assume 0 angle beam here
   //
@@ -218,9 +220,9 @@ bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLaye
   EdbPlateAlignment av;
   av.eNoScale     = 1;         // calculate shift and rotation
   av.eNoScaleRot  = 0;         // calculate shift only
-  av.eOffsetMax   = 10.;
+  av.eOffsetMax   = offMax;
   av.eDZ          = 0.;
-  av.eDPHI        = 0.02;
+  av.eDPHI        = 0.0;
   av.eDoFine      = 1;
   av.eSaveCouples = 1;
   av.SetSigma( 0.3, 0.007 );
@@ -239,20 +241,21 @@ bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLaye
   float dtx2 = av.CalcMeanDiff2Const(2,1,0); 
   float dty2 = av.CalcMeanDiff2Const(3,1,0);
 
+  EdbAffine2D aa1; aa1.ShiftX(-dtx1); aa1.ShiftY(-dty1);
+  EdbAffine2D aa2; aa2.ShiftX(-dtx2); aa2.ShiftY(-dty2);
+
   printf("\n angular offsets found: %f %f %f %f\n\n", dtx1,dty1,dtx2,dty2);
   
   if(av.eNcoins > eMinPeak )
   {
-    if(do_transform) p1.Transform( affXY );
-    l1.GetAffineXY()->Transform( affXY );
-    if(1) {
-      l1.GetAffineTXTY()->ShiftX(-dtx1);
-      l1.GetAffineTXTY()->ShiftY(-dty1);
-      l2.GetAffineTXTY()->ShiftX(-dtx2);
-      l2.GetAffineTXTY()->ShiftY(-dty2);
+    if(do_transform) {
+      p1.Transform( affXY );
+      p1.TransformA( &aa1 );
+      p2.TransformA( &aa2 );
     }
-    l1.GetAffineTXTY()->Print();
-    l2.GetAffineTXTY()->Print();
+    l1.GetAffineXY()->Transform( affXY );
+    l1.GetAffineTXTY()->Transform(aa1);
+    l2.GetAffineTXTY()->Transform(aa2);
     success=true;
   }
   

@@ -49,6 +49,7 @@ EdbPlateAlignment::EdbPlateAlignment()
   eNcoins    = 0;
   eCoarseMin = 5;
   eFineMin   = 5;
+  eNiter     = 3;
 }
 
 //---------------------------------------------------------------------
@@ -91,12 +92,12 @@ void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz)
 
  if(eDoFine) {
     SetParFineAl();
-    for(int i=0; i<5; i++)   FineAl(p1,p2);
+    for(int i=0; i<eNiter; i++)   FineAl(p1,p2);
 
     eUseAffCorr=true;
     Corr2Aff( eCorrL[0] );
 
-    for(int i=0; i<5; i++)   FineAlAff(p1,p2,eCorrL[0] );
+    for(int i=0; i<eNiter; i++)   FineAlAff(p1,p2,eCorrL[0] );
     eH_xy_final.Init(eHxy);
     if(!eFineOK)    goto END;
   }

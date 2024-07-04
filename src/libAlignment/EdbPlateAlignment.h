@@ -32,10 +32,11 @@ class EdbPlateAlignment : public EdbAlignmentV
   EdbPeak2  eH_xy_coarse;
   EdbPeak2  eH_xy_final;      // the final alignment peak
   
-  TObjArray   eSegCouples;       // segment couples objects to fill couples format tree
+  TObjArray  eSegCouples;       // segment couples objects to fill couples format tree
   Bool_t     eDoCorrectBeforeSaving; // apply corrections before saving the couples tree in al.root
   Bool_t     eDoCorrectAngle;    // calculate and apply to the layer angular transformation
-
+  Int_t      eNiter;             // alignment iterations
+  
  public:
   EdbPlateAlignment();
   virtual ~EdbPlateAlignment();
