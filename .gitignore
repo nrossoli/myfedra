@@ -1,6 +1,8 @@
 setup_new.sh
-src/*
+src/*/*.o
+src/*/*/*.o
 bin/*
 include/*
 lib/*
 macros
+
