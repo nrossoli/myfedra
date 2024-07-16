@@ -43,6 +43,9 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.track.DRmax"     , 45. );
   cenv.SetValue("fedra.track.DTmax"     , 0.07 );
   
+  cenv.SetValue("fedra.track.PredictionCutXY"   ,  "0 0. 0. 0. 0.");   // doit x0 y0 dx dy
+  cenv.SetValue("fedra.track.PredictionCutZ"    ,  "0 0. 0. 0.");      // doit z0 zmin zmax
+  cenv.SetValue("fedra.track.PredictionCutAng"  ,  "0 0. 0. 0. 0.");   // doit tx ty dtx dty
   cenv.SetValue("fedra.track.Sigma0" , "3 3 0.005 0.005");
   cenv.SetValue("fedra.track.PulsRamp0"      , "15 20");
   cenv.SetValue("fedra.track.PulsRamp04"     , "15 20");
