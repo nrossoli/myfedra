@@ -18,7 +18,8 @@
 using namespace std;
 using namespace TMath;
 int  AlignToBeam( EdbID id, TEnv &env );
-bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, float offMax);
+bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, float offMax, int flag=0);
+void TuneShrinkage( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, TEnv &env);
 
 void print_help_message()
 {
@@ -41,29 +42,29 @@ void print_help_message()
 void set_default_link(TEnv &cenv)
 {
   // default parameters for the new linking
-  cenv.SetValue("fedra.link.AFID"                ,  1   );   // 1 is usually fine for scanned data; for the db-read data use 0!
-  cenv.SetValue("fedra.link.DoImageCorr"           , 0  );
-  cenv.SetValue("fedra.link.ImageCorrSide1"           , "1. 1. 0.");
-  cenv.SetValue("fedra.link.ImageCorrSide2"           , "1. 1. 0.");
   
-  cenv.SetValue("fedra.link.DoImageMatrixCorr"              , 0  );
-  cenv.SetValue("fedra.link.ImageMatrixCorrSide1"           , "");
-  cenv.SetValue("fedra.link.ImageMatrixCorrSide2"           , "");
+
+  cenv.SetValue("fedra.mosalignebeam.make_ab0"   ,  0   );   // produce output file
+  
+  cenv.SetValue("fedra.link.AFID"                ,  1   );   // 1 is usually fine for scanned data; for the db-read data use 0!
+  cenv.SetValue("fedra.link.DoImageCorr"         , 0  );
+  cenv.SetValue("fedra.link.ImageCorrSide1"      , "1. 1. 0.");
+  cenv.SetValue("fedra.link.ImageCorrSide2"      , "1. 1. 0."); 
+  cenv.SetValue("fedra.link.DoImageMatrixCorr"   , 0  );
+  cenv.SetValue("fedra.link.ImageMatrixCorrSide1", "");
+  cenv.SetValue("fedra.link.ImageMatrixCorrSide2", "");
   
   cenv.SetValue("fedra.link.CheckUpDownOffset"   ,  1   );   // check dXdY offsets between up and correspondent down views
-  cenv.SetValue("fedra.link.BinOK"               , 6.   );
+  cenv.SetValue("fedra.link.BinOK"               ,  6.   );
   cenv.SetValue("fedra.link.NcorrMin"            , 100  );
-  cenv.SetValue("fedra.link.DoCorrectShrinkage"  , false );
-  cenv.SetValue("fedra.link.read.InvertSides"    , 0  );
-  cenv.SetValue("fedra.link.read.HeaderCut"      , "1"  );
-  cenv.SetValue("fedra.link.read.UseDensityAsW"      , false  );
-  cenv.SetValue("fedra.link.read.ICUT"           , "-1     -500. 500.   -500.   500.    -1.   1.      -1.   1.       0.  50.");
+  cenv.SetValue("fedra.link.DoCorrectShrinkage"  , true );
+  cenv.SetValue("fedra.link.read.UseDensityAsW"  , false  );
   cenv.SetValue("fedra.link.RemoveDoublets"      , "1    2. .01   1");  //yes/no   dr  dt  checkview(0,1,2)
   cenv.SetValue("fedra.link.DumpDoubletsTree"    , true );
   cenv.SetValue("fedra.link.shr.NsigmaEQ"        , 7.5  );
-  cenv.SetValue("fedra.link.shr.Shr0"            , .990  );
+  cenv.SetValue("fedra.link.shr.Shr0"            , .85  );
   cenv.SetValue("fedra.link.shr.DShr"            , .3   );
-  cenv.SetValue("fedra.link.shr.ThetaLimits"     ,"0.0  1.");
+  cenv.SetValue("fedra.link.shr.ThetaLimits"     , "0.01  1." );
   cenv.SetValue("fedra.link.DoCorrectAngles"     , true );
   cenv.SetValue("fedra.link.ang.Chi2max"         , 1.5  );
   cenv.SetValue("fedra.link.DoFullLinking"       , true );
@@ -72,16 +73,15 @@ void set_default_link(TEnv &cenv)
   cenv.SetValue("fedra.link.full.DT"             , 0.1  );
   cenv.SetValue("fedra.link.full.CHI2Pmax"       , 3.   );
   cenv.SetValue("fedra.link.DoSaveCouples"       , true );
-  cenv.SetValue("fedra.link.Sigma0"         , "1 1 0.007 0.007");
-  cenv.SetValue("fedra.link.PulsRamp0"      , "6 9");
-  cenv.SetValue("fedra.link.PulsRamp04"     , "6 9");
-  cenv.SetValue("fedra.link.Degrad"         ,  5   );
+  cenv.SetValue("fedra.link.Sigma0"              , "1 1 0.007 0.007");
+  cenv.SetValue("fedra.link.PulsRamp0"           , "6 9");
+  cenv.SetValue("fedra.link.PulsRamp04"          , "6 9");
+  cenv.SetValue("fedra.link.Degrad"              ,  5   );
   
   cenv.SetValue("fedra.link.LLfunction"     , "0.256336-0.16489*x+2.11098*x*x" );
   cenv.SetValue("fedra.link.CPRankingAlg"   , 0 );
 
   cenv.SetValue("emlink.reportfileformat"   , "pdf" );
-
   cenv.SetValue("emlink.outdir"          , "..");
   cenv.SetValue("emlink.env"             , "link.rootrc");
   cenv.SetValue("emlink.EdbDebugLevel"   , 1);
@@ -164,15 +164,19 @@ int AlignToBeam( EdbID id, TEnv &cenv )
   EdbMosaicIO mio;
   TString file;
   file.Form("p%3.3d/%d.%d.%d.%d.mos.root",
-	      id.ePlate, id.eBrick, id.ePlate, id.eMajor, id.eMinor);
+	    id.ePlate, id.eBrick, id.ePlate, id.eMajor, id.eMinor);
   mio.Init( file.Data() );
   
   bool use_saved_alignment=true;
   
   EdbLayer *mapside1 = mio.GetCorrMap( id.ePlate, 1 ); 
   EdbLayer *mapside2 = mio.GetCorrMap( id.ePlate, 2 ); // align side 2 to side 1
+  mapside1->SetZ( 97.5); // TODO take it from set.root
+  mapside2->SetZ(-97.5);
   
   int nc=mapside2->Map().Ncell();
+  Log(1,"mosalignbeam::AlignToBeam","with %d fragments",nc);
+
   for( int i=0; i<nc; i++ )
   {
     EdbLayer   *l1 = mapside1->Map().GetLayer(i);
@@ -184,32 +188,31 @@ int AlignToBeam( EdbID id, TEnv &cenv )
       l1->GetAffineTXTY()->Reset();
       l2->GetAffineTXTY()->Reset();
     }
+    l1->SetZ( mapside1->Z() );   // base thicknes is considered fixed...
+    l2->SetZ( mapside2->Z() );    
     EdbPattern *p1 = mio.GetFragment( id.ePlate, 1, i, use_saved_alignment ); //get side 1
     EdbPattern *p2 = mio.GetFragment( id.ePlate, 2, i, use_saved_alignment ); //get side 2
     p1->SetScanID(id);
     p2->SetScanID(id);
-    AlignFragmentToBeam0(*p2, *p1, *l2,*l1, 10);  //align 2 to 1 using parallel beam tracks
-    AlignFragmentToBeam0(*p2, *p1, *l2,*l1, 5);  //align 2 to 1 using parallel beam tracks
-    AlignFragmentToBeam0(*p2, *p1, *l2,*l1, 3);  //align 2 to 1 using parallel beam tracks
+    p1->SetSegmentsFlag(0);
+    p2->SetSegmentsFlag(0);
+    Log(1,"mosalignbeam::AlignFragmentToBeam","fragment %d: %d & %d", p1->ID(), p1->N(),p2->N() );
+
+    AlignFragmentToBeam0(*p2, *p1, *l2,*l1, 10  );  //align 2 to 1 using parallel beam tracks
+    AlignFragmentToBeam0(*p2, *p1, *l2,*l1,  5  );  //align 2 to 1 using parallel beam tracks
+    AlignFragmentToBeam0(*p2, *p1, *l2,*l1,  3, -10);  //align 2 to 1 using parallel beam tracks, exclude segs by flag
+    
+    TuneShrinkage(*p2, *p1, *l2,*l1, cenv); // shrinkage correction using non-beam tracks
+    
     delete p1;
     delete p2;
-   }
-
-/*  
-   for( int i=0; i<nc; i++ )
-  {
-    EdbLayer *l = mapside->Map().GetLayer(i);
-    l->GetAffineXY()->Print();
   }
-  */
-
   mio.SaveCorrMap( id.ePlate, 1, *mapside1,  file.Data() );
-  mio.SaveCorrMap( id.ePlate, 2, *mapside2,  file.Data() );
- 
+  mio.SaveCorrMap( id.ePlate, 2, *mapside2,  file.Data() ); 
 }
 
 //-----------------------------------------------------------------------
-bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, float offMax)
+bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, float offMax, int flag)
 {
   // Assume 0 angle beam here
   //
@@ -225,14 +228,14 @@ bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLaye
   av.eDPHI        = 0.0;
   av.eDoFine      = 1;
   av.eSaveCouples = 1;
-  av.SetSigma( 0.3, 0.007 );
+  av.SetSigma( 0.3, 0.015 );
   av.eDoublets[0] = av.eDoublets[1]=0.01;
   av.eDoublets[2] = av.eDoublets[3]=0.0001;
   av.eDoCorrectAngle = false;  
-  av.eSaveCouples=1;
+  av.eSaveCouples=0;
   
   av.InitOutputFile( Form( "p%.3d/%d_%d.ab0.root", p1.ScanID().ePlate, p1.ID(), p2.ID() ) ); 
-  av.Align( p1, p2, 0); //-190
+  av.Align( p1, p2, 0, flag); //-190
   EdbAffine2D *affXY = av.eCorrL[0].GetAffineXY();
   EdbAffine2D *affTXTY = av.eCorrL[0].GetAffineTXTY();
   
@@ -244,7 +247,7 @@ bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLaye
   EdbAffine2D aa1; aa1.ShiftX(-dtx1); aa1.ShiftY(-dty1);
   EdbAffine2D aa2; aa2.ShiftX(-dtx2); aa2.ShiftY(-dty2);
 
-  printf("\n angular offsets found: %f %f %f %f\n\n", dtx1,dty1,dtx2,dty2);
+  //printf("\n angular offsets found: %f %f %f %f\n\n", dtx1,dty1,dtx2,dty2);
   
   if(av.eNcoins > eMinPeak )
   {
@@ -261,5 +264,16 @@ bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLaye
   
   av.CloseOutputFile();
   return success;
+}
+
+//-----------------------------------------------------------------------
+void TuneShrinkage( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, TEnv &env)
+{
+  EdbLinking link;
+  link.InitOutputFile( Form( "p%.3d/%d_%d.ab1.root", p1.ScanID().ePlate, p1.ID(), p2.ID() ) );
+  link.Link( p1, p2, l1, l2, env );
+  l1.SetShrinkage( l1.Shr()*link.eL1.Shr() );
+  l2.SetShrinkage( l2.Shr()*link.eL2.Shr() );
+  link.CloseOutputFile();
 }
 
