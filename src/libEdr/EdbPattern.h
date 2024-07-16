@@ -73,6 +73,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   void      SetSegmentsZ();
   void      SetSegmentsDZ(float dz);
   void      SetSegmentsW(float w);
+  void      SetSegmentsFlag(int flag);
 
   void      SetSegmentsPlate(int plate);
 
@@ -107,6 +108,8 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   Float_t GetSizeXY();
   Float_t GetTrackDensity();
   Float_t GetTrackDensitymm2();
+  void RemovePosMargins(float  x0, float  y0, float  dx, float  dy);
+  void RemoveAngMargins(float tx0, float ty0, float dtx, float dty);
 
   ClassDef(EdbSegmentsBox,1)  // collection of segments
 };

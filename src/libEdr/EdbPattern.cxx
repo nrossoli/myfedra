@@ -237,6 +237,32 @@ float EdbSegmentsBox::GetTrackDensitymm2()
 }
  
 //______________________________________________________________________________
+void EdbSegmentsBox::RemovePosMargins(float  x0, float  y0, float  dx, float  dy)
+{
+  int nseg = N();
+  for(int i=nseg-1; i>=0; i-- )    {
+    EdbSegP *s = GetSegment(i);
+    if( s->eX > x0+dx || s->eX < x0-dx || s->eY > y0+dy || s->eY < y0-dy ) {
+      eSegments->RemoveAt(i);
+    }
+  }
+  eSegments->Compress();
+  Log(2,"EdbSegmentsBox::RemovePosMargins","%d out of %d segments left", N(), nseg );
+}
+
+//______________________________________________________________________________
+void EdbSegmentsBox::RemoveAngMargins(float  tx0, float  ty0, float  dtx, float  dty)
+{
+  int nseg = N();
+  for(int i=nseg-1; i>=0; i-- )    {
+    EdbSegP *s = GetSegment(i);
+    if( s->eTX > tx0+dtx || s->eTX < tx0-dtx || s->eTY > ty0+dty || s->eTY < ty0-dty ) eSegments->RemoveAt(i);
+  }
+  eSegments->Compress();
+  Log(2,"EdbSegmentsBox::RemoveAngMargins","%d out of %d segments left", N(), nseg );
+}
+
+//______________________________________________________________________________
 void EdbSegmentsBox::SetSegmentsPlate(int plate)
 {
   int nseg = N();
@@ -269,6 +295,15 @@ void EdbSegmentsBox::SetSegmentsW(float w)
   int nseg = N();
   for(int i=0; i<nseg; i++ )    {
     GetSegment(i)->SetW( w );
+  }
+}
+
+//______________________________________________________________________________
+void EdbSegmentsBox::SetSegmentsFlag(int flag)
+{
+  int nseg = N();
+  for(int i=0; i<nseg; i++ )    {
+    GetSegment(i)->SetFlag( flag );
   }
 }
 
