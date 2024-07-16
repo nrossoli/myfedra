@@ -531,6 +531,9 @@ void EdbTrackAssembler::CombTracks( TObjArray &selected )
 {
   eNsegMin=2;
   eNgapMax=50;
+  ePRC.doXY=0;
+  ePRC.doAng=0;
+  ePRC.doZ=0;
 }
 
 //--------------------------------------------------------------------------------------
@@ -569,9 +572,13 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env, Int_t ix, Int_t iy)
     bool        eDoRealign      = env.GetValue("fedra.track.do_realign"     ,      0   );
     bool        do_comb         = env.GetValue("fedra.track.do_comb"        ,      0   );
     eNsegMin                    = env.GetValue("fedra.track.NsegMin"        ,      2   );
-    float       momentum        = env.GetValue("fedra.track.momentum"       ,      2.  );  
+    float       momentum        = env.GetValue("fedra.track.momentum"       ,      2.  );
     etra.SetMomentum (momentum);
-    
+
+    SetPredictionXY(  env.GetValue("fedra.track.PredictionCutXY"   ,  "0 0. 0. 0. 0.") );
+    SetPredictionZ(   env.GetValue("fedra.track.PredictionCutZ"    ,  "0 0. 0. 0.") );
+    SetPredictionAng( env.GetValue("fedra.track.PredictionCutAng"  ,  "0 0. 0. 0. 0.") );
+   
     etra.InitTrZMap(  env.GetValue("fedra.track.TrZmap", "2400 0 120000   2000 0 100000   30" ) );
 
     //adding cell selection
@@ -649,7 +656,10 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env, Int_t ix, Int_t iy)
             plate->CorrectSegLocal(*s);
           }
         }
-      
+
+        if(ePRC.doXY ) p.RemovePosMargins( ePRC.x0, ePRC.y0, ePRC.dx,  ePRC.dy  );
+        if(ePRC.doAng) p.RemoveAngMargins( ePRC.tx, ePRC.ty, ePRC.dtx, ePRC.dty );
+	// TODO doZ
       
         if(do_misalign) {
           p.Transform(&misalign[i]);
@@ -793,6 +803,7 @@ void EdbScanTracking::TrackAli(EdbPVRec &ali, TEnv &env)
     etra.eCond.SetPulsRamp04(    env.GetValue("fedra.track.PulsRamp04"     , "15 20") );
     etra.eCond.SetDegrad(        env.GetValue("fedra.track.Degrad"          , 4) );
     etra.eCond.SetRadX0(         env.GetValue("fedra.track.RadX0"          , 5810.) );
+    
       
     etra.eDTmax                 = env.GetValue("fedra.track.DTmax"          ,     0.07 );
     etra.eDRmax                 = env.GetValue("fedra.track.DRmax"          ,    45.   );
@@ -888,3 +899,17 @@ void EdbScanTracking::TrackAli(EdbPVRec &ali, TEnv &env)
     SaveHist(idset,etra);
 }
 
+void  EdbScanTracking::SetPredictionXY( const char *str )
+{
+  sscanf(str,"%d %f %f %f %f", &ePRC.doXY, &ePRC.x0, &ePRC.y0, &ePRC.dx,  &ePRC.dy);
+}
+
+void  EdbScanTracking::SetPredictionZ( const char *str )
+{
+ sscanf(str,"%d %f %f %f %f", &ePRC.doZ, &ePRC.z0, &ePRC.zmin, &ePRC.zmax );
+}
+
+void  EdbScanTracking::SetPredictionAng( const char *str )
+{
+ sscanf(str,"%d %f %f %f %f", &ePRC.doAng, &ePRC.tx, &ePRC.ty, &ePRC.dtx, &ePRC.dty );
+}

@@ -13,6 +13,16 @@
 #include "EdbScanProc.h"
 #include "EdbTrackFitter.h"
 
+struct PredictionCut
+{
+  bool  doXY;             // if false - ignore position cut
+  float x0,y0, dx,dy ;    // position cut: reference in xy +-d
+  bool  doZ;              // if false - ignore this cut
+  float z0, zmin, zmax;   // acceptance in z
+  bool  doAng;            // if false - ignore this cut
+  float tx,ty, dtx,dty;   // angle use x0,y0,z0 as starting point  +-d
+};
+
 //_________________________________________________________________________
 class EdbTrackAssembler: public TObject {
 
@@ -89,6 +99,7 @@ class EdbScanTracking: public TObject {
    int          eNgapMax;
    EdbScanProc *eSproc;
    bool         eDoRealign;
+   PredictionCut ePRC;
   
  public:
    EdbScanTracking();
@@ -97,6 +108,9 @@ class EdbScanTracking: public TObject {
    void  TrackAli(EdbPVRec &ali, TEnv &env);
    void  TrackSetBT(EdbID id, TEnv &env, Int_t ix = -1, Int_t iy = -1);
    void  SaveHist(EdbID idset, EdbTrackAssembler &etra);
+   void  SetPredictionXY( const char *str  );
+   void  SetPredictionZ(  const char *str  );
+   void  SetPredictionAng( const char *str );
  
    ClassDef(EdbScanTracking,2) // To handle tracking in the scanset
 };
