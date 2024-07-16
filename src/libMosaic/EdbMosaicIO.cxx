@@ -69,8 +69,9 @@ EdbPattern *EdbMosaicIO::GetFragment(int plate, int side, int id, bool do_corr )
     if(do_corr) 
       if(l) 
       {
-	p->Transform(l->GetAffineXY());
-	p->TransformA(l->GetAffineTXTY());
+	p->Transform(    l->GetAffineXY());
+	p->TransformA(   l->GetAffineTXTY());
+	p->TransformShr( l->Shr() );
 	Log(2,"EdbMosaicIO::GetFragment","AffXY  : %s", l->GetAffineXY()->AsString() );
  	Log(2,"EdbMosaicIO::GetFragment","AffTXTY: %s", l->GetAffineTXTY()->AsString() );
       }
