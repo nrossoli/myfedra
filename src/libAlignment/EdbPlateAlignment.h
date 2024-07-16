@@ -41,7 +41,7 @@ class EdbPlateAlignment : public EdbAlignmentV
   EdbPlateAlignment();
   virtual ~EdbPlateAlignment();
 
-  void Align(EdbPattern &p1, EdbPattern &p2, float dz );
+  void Align(EdbPattern &p1, EdbPattern &p2, float dz, int flag=0 );
   void TestAl(EdbPattern &p1, EdbPattern &p2);
   void CoarseAl(EdbPattern &p1, EdbPattern &p2);
   void FineAl(EdbPattern &p1, EdbPattern &p2);

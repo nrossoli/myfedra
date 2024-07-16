@@ -101,8 +101,8 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   Log(2,"EdbLinking::Link","segments z1 = %f  z2 = %f",p1.GetSegment(0)->Z(),p2.GetSegment(0)->Z());
 
   GetPar(env);
-  eL1 = l1;
-  eL2 = l2;
+  eL1.Copy(l1,true);
+  eL2.Copy(l2,true);
 
   if(area1<=0) area1 = EstimatePatternArea(p1);
   if(area2<=0) area2 = EstimatePatternArea(p2);
@@ -112,7 +112,7 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   GetPreselectionPar(seq2,env);
   seq1.eNsigma=eNsigmaEQshr;
   seq2.eNsigma=eNsigmaEQshr;
-  seq1.PrintLimits();
+  if(gEDBDEBUGLEVEL>1) seq1.PrintLimits();
   
   TH1F *hTall1 = seq1.ThetaPlot(p1   , "hTall1","Theta plot all, side 1 "); hTall1->Write();
   TH1F *hTall2 = seq2.ThetaPlot(p2   , "hTall2","Theta plot all, side 2 "); hTall2->Write();
@@ -477,6 +477,7 @@ void EdbLinking::RankCouples( TObjArray &arr1,TObjArray &arr2 )
     eSegCouples.Add(sc);
   }
 
+  eSegCouples.SetOwner();
   EdbSegCouple::SetSortFlag(0);    // sort by CHI2P
   eSegCouples.UnSort();
   eSegCouples.Sort();

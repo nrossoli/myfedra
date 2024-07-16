@@ -48,7 +48,8 @@ class EdbAlignmentV : public TObject
   void    InitHshr0( int n, float min, float max) { eH[0][5].InitH1(n, min, max); }
   void    InitHshr1( int n, float min, float max) { eH[1][5].InitH1(n, min, max); }
   char   *StrDVsame() const {return Form("%7.2f %7.2f %8.5f %8.5f",eDVsame[0],eDVsame[1],eDVsame[2],eDVsame[3]); }
-  Bool_t SideOK(int side);
+  Bool_t  SideOK(int side);
+  void    AssignFlagToS(int flag);
    
   // Selector functions
   void    DefineGuessCell( float xmin1, float xmax1, float ymin1, float ymax1, 
@@ -78,7 +79,7 @@ class EdbAlignmentV : public TObject
   Float_t         CalcMeanDiff(int ivar);
   Float_t         CalcMeanDiff2Const(int ivar, int side, float mean);
   Float_t         CalcFractMeanDiff(int ivar, float fraction);
-  Float_t           FindDensityPeak(TArrayF &arr, float fraction);
+  Float_t         FindDensityPeak(TArrayF &arr, float fraction);
   Float_t         CalcMeanShr(float tmin=0.1, float tmax=2.);
   Float_t         CalcMeanDZ(float tmin=0.1, float tmax=2.);
   Int_t           CalcApplyMeanDiff();

@@ -59,8 +59,10 @@ EdbPlateAlignment::~EdbPlateAlignment()
 }
 
 //---------------------------------------------------------------------
-void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz)
+void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz, int flag)
 {
+  // if flag is different from 0 assign it to the selected segments
+  //
   eStatus = false;
   eHxy.Delete();
   eH_zphi_coarse.Delete();
@@ -109,6 +111,7 @@ void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz)
     RankCouples( eS[0], eS[1] );
   }
   ProduceReport();
+  if(flag) AssignFlagToS(flag);           // assign particular flag to the selected segments
   if(eSaveCouples) SaveCouplesTree();
 }
 
@@ -293,7 +296,6 @@ void EdbPlateAlignment::ProduceReport()
     float s0 = xbins[0]*xbins[0];
     for(int i=1; i<nbin+1; i++) xbins[i] = Sqrt( xbins[i-1]*xbins[i-1] + s0 );
 
-    //    TH1F *thetadens = new TH1F("thetadens","theta density",21,0, 0.7 );
     TH1F *thetadens = new TH1F("thetadens","theta density",nbin,xbins.GetArray() );
     for(int i=0; i<n; i++) {
       //EdbSegP *s1 = (EdbSegP*)eS[0].UncheckedAt(i);
@@ -304,12 +306,7 @@ void EdbPlateAlignment::ProduceReport()
     }
     thetadens->Draw();
 
-    //--
-
     eH_xy_coarse.Write("peak2c");
-    if(zphiCoarse) zphiCoarse->Write();
-    if(xyCoarse)   xyCoarse->Write();
-    if(xyFine)     xyFine->Write();
     cc->Write("report_al");
     eCorrL[0].Write("corr_layer1");
     eCorrL[1].Write("corr_layer2");

@@ -204,6 +204,16 @@ void EdbAlignmentV::FillThetaHist(int side, EdbH2 &htxy)
 }
 
 //---------------------------------------------------------------------
+void EdbAlignmentV::AssignFlagToS(int flag)
+{
+  int n = CheckEqualArr(eS[0], eS[1]);
+  for(int i=0; i<n; i++) {
+    ((EdbSegP*)eS[0].UncheckedAt(i))->SetFlag(flag);
+    ((EdbSegP*)eS[1].UncheckedAt(i))->SetFlag(flag);
+ }
+}
+
+//---------------------------------------------------------------------
 int EdbAlignmentV::FillCombinations()
 {
   float dxMax = 2*Max( ePC[0].Xbin(), ePC[1].Xbin() );
