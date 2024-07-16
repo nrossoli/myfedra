@@ -33,7 +33,7 @@ void EdbLayer::Set0()
 }
 
 ///______________________________________________________________________________
-void EdbLayer::Copy(const EdbLayer &l)
+void EdbLayer::Copy(const EdbLayer &l, bool nomap)
 {
   eID = l.ID();
   eZ = l.Z(); 
@@ -47,7 +47,7 @@ void EdbLayer::Copy(const EdbLayer &l)
   eDY=l.DY();
   CopyCorr(l);
   eNcp = l.eNcp;
-  eMap.Copy(l.eMap);
+  if(nomap) eMap.Copy(l.eMap);
 }
 
 ///______________________________________________________________________________
@@ -189,6 +189,17 @@ void EdbCorrectionMap::PrintDZ()
 {
   int n=Ncell();
   for(int i=0; i<n; i++) printf("%d  dz=%7.2f\n",i,GetLayer(i)->Zcorr());
+}
+
+//-----------------------------------------------------------------------------------------------------
+void EdbCorrectionMap::Print()
+{
+  int n=Ncell();
+  printf("EdbCorrectionMap with %d = %d x %d layers\n", n, NX(), NY() );
+  for(int i=0; i<n; i++) { 
+    printf("%d  dz=%7.2f\n",i,GetLayer(i)->Zcorr()); 
+    GetLayer(i)->Print();
+  }
 }
 
 //-----------------------------------------------------------------------------------------------------

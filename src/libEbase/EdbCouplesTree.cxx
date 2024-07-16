@@ -125,7 +125,10 @@ bool EdbCouplesTree::InitCouplesTree(const char *name, const char *fname, Option
     }
   }
   
-  Log(2,"EdbCouplesTree::InitCouplesTree","create new tree %s in %s",name, fname);
+  const char *fn = fname;
+  if(!fn) if(gDirectory->GetFile()) fn=gDirectory->GetFile()->GetName();
+  Log(2,"EdbCouplesTree::InitCouplesTree","create new tree %s in %s",name, fn);  
+  
   eTree = new TTree(name, "couples tree (s1:s2:s)");
   eTree->SetMaxTreeSize(15000000000LL);   //set 15 Gb file size limit)
   

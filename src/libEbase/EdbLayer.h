@@ -25,6 +25,7 @@ class EdbCorrectionMap : public EdbCell2
   EdbLayer *GetLayer(int i) { return (EdbLayer *)(GetObject(i, 0)); }
   void      CorrectSeg( EdbSegP &s );
   void      ApplyCorrections(EdbCorrectionMap &map);
+  void      Print();
   void      PrintDZ();
   int       Ncp();
   
@@ -67,7 +68,7 @@ class EdbLayer : public TObject {
   virtual ~EdbLayer(){}
 
   void Set0();
-  void Copy(const EdbLayer &l);
+  void Copy(const EdbLayer &l, bool nomap=false );
   void CopyCorr(const EdbLayer &l);
   EdbCorrectionMap    &Map() { return eMap; }
   int   ID()   const {return eID;}
@@ -136,6 +137,7 @@ class EdbLayer : public TObject {
   void Invert();
 
   void Print();
+  void PrintLocal() { eMap.Print(); }
 
   ClassDef(EdbLayer,5)  // shrinked layer
 };
