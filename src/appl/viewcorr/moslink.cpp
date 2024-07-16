@@ -208,7 +208,7 @@ int LinkPlate( EdbID id, int from, int nfrag, TEnv &cenv )
   {
     EdbPattern *p1 = mio.GetFragment( id.ePlate, 1, i, true); // (plate,side,id)
     EdbPattern *p2 = mio.GetFragment( id.ePlate, 2, i, true);
-       
+    Log(1,"moslink::LinkPlate","fragment %d (of %d) with %d & %d mt", i,nfrag, p1->N(), p2->N() );
     if(p1&&p2) 
     {
       p1->SetScanID(id);
@@ -223,59 +223,7 @@ int LinkPlate( EdbID id, int from, int nfrag, TEnv &cenv )
       delete p2;
     }
   }
-  
-/*  
-  EdbRunAccess r;
-  r.eInvertSides=cenv.GetValue("fedra.link.read.InvertSides"      , 0);
-  r.eHeaderCut = cenv.GetValue("fedra.link.read.HeaderCut"      , "1");
-  r.eHeaderCut.Print();
-  r.eAFID           =  cenv.GetValue("fedra.link.AFID"      , 1);
-  printf("EdbScanProc::LinkRunTest ** AFID=%d\n", r.eAFID);
-  InitRunAccessNew(r,id,plate);
-  r.eWeightAlg  =  cenv.GetValue("fedra.link.read.WeightAlg"      , 0  );
-  r.AddSegmentCut(1,cenv.GetValue("fedra.link.read.ICUT"      , "-1") );
-  r.eDoImageCorr = cenv.GetValue("fedra.link.DoImageCorr", 0  );
-  if(r.eDoImageCorr) {
-    r.SetImageCorrection( 1, cenv.GetValue("fedra.link.ImageCorrSide1"      , "1. 1. 0.") );
-    r.SetImageCorrection( 2, cenv.GetValue("fedra.link.ImageCorrSide2"      , "1. 1. 0.") );
-  }
-  
-  r.eDoImageMatrixCorr = cenv.GetValue("fedra.link.DoImageMatrixCorr", 0  );
-  if(r.eDoImageMatrixCorr) {
-    r.ReadImageMatrixCorrection( 1, cenv.GetValue("fedra.link.ImageMatrixCorrSide1"      , "") );
-    r.ReadImageMatrixCorrection( 2, cenv.GetValue("fedra.link.ImageMatrixCorrSide2"      , "") );
-  }
-   
-  r.eTracking =  cenv.GetValue("fedra.link.Tracking"      , -1);
 
-  EdbPattern p1, p2;
-  p1.SetScanID(id); p1.SetSide(2);
-  p2.SetScanID(id); p2.SetSide(1);
-  r.GetPatternDataForPrediction( -1, 2, p1 );
-  r.GetPatternDataForPrediction( -1, 1, p2 );
-
-  EdbLinking link;
-  TString cpfile;
-  MakeFileName(cpfile,id,"cp.root");
-  link.InitOutputFile( cpfile );
-
-  if( cenv.GetValue("fedra.link.CheckUpDownOffset"      , 1) ) r.CheckUpDownOffsets()->Write();
-  if(r.eDoViewAnalysis)   {
-     r.eHViewXY[1].DrawH2("ViewXY1","XY segments distribution in a view coord side 1")->Write();
-     r.eHViewXY[2].DrawH2("ViewXY2","XY segments distribution in a view coord side 2")->Write();
-     r.CheckViewSize();
-     //r.CheckStepSize();
-  }
-
-  link.Link( p2, p1, *(plate.GetLayer(2)), *(plate.GetLayer(1)), cenv );
-  link.CloseOutputFile();
-  if(link.eDoCorrectShrinkage || link.eDoCorrectAngles) {
-     UpdatePlatePar( id, link.eL1 );  //TODO: check up/down id
-     UpdatePlatePar( id, link.eL2 );
-   }
-
-*/  
-  
 }
 
 //-----------------------------------------------------------------------
