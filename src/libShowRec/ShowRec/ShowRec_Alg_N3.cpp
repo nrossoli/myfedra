@@ -3,10 +3,6 @@ void ReconstructShowers_N3()
 {
     Log(2, "ShowRec.cpp", "--- void ReconstructShowers_N3() ---");
 
-//     cout << "ReconstructShowers_N3()    N3_ANN_PLATE_DELTANMAX  = " << N3_ANN_PLATE_DELTANMAX << endl;
-//     cout << "ReconstructShowers_N3()   return NOW!!!" << endl;
-//     return;
-    
     //-----------------------------------------------------------------
     // Main function for reconstruction of N3 Algorithm
     //-----------------------------------------------------------------
@@ -276,7 +272,7 @@ void ReconstructShowers_N3()
                     cout << "Print out all variables for BT i  NOT connected with InBT :   *****"<<endl;
                     for (Int_t loop_deltaNpl = 0; loop_deltaNpl<5; ++loop_deltaNpl) {
                         dNpl=deltaNpl[loop_deltaNpl];
-                        printf("BT i->ID(), Type, dNpl, mindR, mindT, mindMinDist nDifferentSegs, : %07d %d %d %.03f %.03f %.03f %.03f %d \n",seg->ID(),N3_Type, dNpl,  N3_Inputvar[OffsetNVar+0], N3_Inputvar[OffsetNVar+1], N3_Inputvar[OffsetNVar+2], N3_Inputvar[OffsetNVar+3]);
+                        printf("BT i->ID(), Type, dNpl, mindR, mindT, mindMinDist nDifferentSegs, : %07d %d %.03f %.03f %.03f %.03f %d \n",seg->ID(),N3_Type, dNpl,  N3_Inputvar[OffsetNVar+0], N3_Inputvar[OffsetNVar+1], N3_Inputvar[OffsetNVar+2], N3_Inputvar[OffsetNVar+3]);
                         OffsetNVar+=4;
                     }
                     cout << "*******************************************************************"<<endl;
@@ -589,16 +585,19 @@ void ReconstructShowers_N3()
         cout << "  Use TMLPAnalyzer to see what it looks for... done." << endl;
         cout << " ------------------------------------------------------------" << endl;
         cout << "  NOW WRITE FILES to THE ROOT FILES .... " << endl;
+        
+        simu->Write();
+        
         if (cmd_ALN3DUMP ==1 ) {
             // write trees also in the root file.
             // Attention: can give large root files!
             simu_SG->Write();
             simu_BG->Write();
-            simu->Write();
+            N3_TMLP_ANN->Write();
+            ana->Write();
+            mlpa_canvas->Write();
         }
-        N3_TMLP_ANN->Write();
-        mlpa_canvas->Write();
-        ana->Write();
+        
         N3_ALG_ANN_TrainingsFile->Close();
         cout << "  NOW WRITE FILES to THE ROOT FILES .... done. " << endl;
 

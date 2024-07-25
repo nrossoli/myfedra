@@ -1,4 +1,3 @@
-
 //---------------------------------------------------------------------------------
 //-			gEDBDEBUGLEVEL
 Int_t gEDBDEBUGLEVEL=2;
@@ -33,6 +32,7 @@ Int_t cmd_GBMC=0; // addition variable to tell the program which MCEvt is doing 
 Int_t cmd_EXTHETA=0; // if set to 1 then extract subpatterns with delta theta cut w.r.t. InBT.
 Int_t cmd_ALN3TRAIN=0; // train the neural net in ALTP13 (N3_Alg)  0: Train, 1:Run
 Int_t cmd_ALN3DUMP=0; // write also the input tree for training in the file 0: no (default), 1:yes (can give large root files!)
+Int_t cmd_ALN3EQUALIZE=1; // Try to have same number of SG/BG tracks for training: 0: all BG Tracks are taken in the trainings tree, 1: about same BG as SG Tracks are filled in the trainingstree.
 //----------------------------------------------------
 char *cmd_lnkdef_name = "lnk.def";
 Int_t cmd_gEDBDEBUGLEVEL=2;   //  2: normal; 3: long, 4 very long; 1: none
