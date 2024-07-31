@@ -24,7 +24,7 @@ void TuneShrinkage( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, 
 void print_help_message()
 {
   cout<< "\nUsage: \n";
-  cout<< "\t  mosalignebeam  -id=ID  [-from=frag0 -nfrag=N  -merge -v=DEBUG] \n";
+  cout<< "\t  mosalignbeam  -id=ID  [-from=frag0 -nfrag=N  -merge -v=DEBUG] \n";
 
   cout<< "\t\t  ID    - id of the raw.root file formed as BRICK.PLATE.MAJOR.MINOR \n";
   cout<< "\t\t  frag0 - the first fragment (default: 0) \n";
@@ -33,8 +33,8 @@ void print_help_message()
   
   cout<< "\n If the data location directory if not explicitly defined\n";
   cout<< " the current directory will be assumed to be the brick directory \n";
-  cout<< "\n If the parameters file (mosalignebeam.rootrc) is not presented - the default \n";
-  cout<< " parameters will be used. After the execution them are saved into mosalignebeam.save.rootrc file\n";
+  cout<< "\n If the parameters file (mosalignbeam.rootrc) is not presented - the default \n";
+  cout<< " parameters will be used. After the execution them are saved into mosalignbeam.save.rootrc file\n";
   cout<<endl;
 }
 
@@ -44,7 +44,8 @@ void set_default_link(TEnv &cenv)
   // default parameters for the new linking
   
 
-  cenv.SetValue("fedra.mosalignebeam.make_ab0"   ,  0   );   // produce output file
+  cenv.SetValue("fedra.mosalignbeam.make_ab0"   ,  1   );   // produce debug output (beam)
+  cenv.SetValue("fedra.mosalignbeam.make_ab1"   ,  1   );   // produce debig output (shrinkage)
   
   cenv.SetValue("fedra.link.AFID"                ,  1   );   // 1 is usually fine for scanned data; for the db-read data use 0!
   cenv.SetValue("fedra.link.DoImageCorr"         , 0  );
@@ -64,15 +65,15 @@ void set_default_link(TEnv &cenv)
   cenv.SetValue("fedra.link.shr.NsigmaEQ"        , 7.5  );
   cenv.SetValue("fedra.link.shr.Shr0"            , .85  );
   cenv.SetValue("fedra.link.shr.DShr"            , .3   );
-  cenv.SetValue("fedra.link.shr.ThetaLimits"     , "0.01  1." );
+  cenv.SetValue("fedra.link.shr.ThetaLimits"     , "0.05  1." );
   cenv.SetValue("fedra.link.DoCorrectAngles"     , true );
   cenv.SetValue("fedra.link.ang.Chi2max"         , 1.5  );
-  cenv.SetValue("fedra.link.DoFullLinking"       , true );
+  cenv.SetValue("fedra.link.DoFullLinking"       , false );
   cenv.SetValue("fedra.link.full.NsigmaEQ"       , 5.5  );
   cenv.SetValue("fedra.link.full.DR"             , 20.  );
   cenv.SetValue("fedra.link.full.DT"             , 0.1  );
   cenv.SetValue("fedra.link.full.CHI2Pmax"       , 3.   );
-  cenv.SetValue("fedra.link.DoSaveCouples"       , true );
+  cenv.SetValue("fedra.link.DoSaveCouples"       , false );
   cenv.SetValue("fedra.link.Sigma0"              , "1 1 0.007 0.007");
   cenv.SetValue("fedra.link.PulsRamp0"           , "6 9");
   cenv.SetValue("fedra.link.PulsRamp04"          , "6 9");
@@ -87,14 +88,17 @@ void set_default_link(TEnv &cenv)
   cenv.SetValue("emlink.EdbDebugLevel"   , 1);
 }
 
+bool do_make_ab0;
+bool do_make_ab1;
+
 int main(int argc, char* argv[])
 {
   if (argc < 2)   { print_help_message();  return 0; }
   
-  TEnv cenv("mosalignebeamenv");
-  gEDBDEBUGLEVEL     = cenv.GetValue("mosalignebeam.EdbDebugLevel" , 1);
-  const char *env    = cenv.GetValue("mosalignebeam.env"            , "mosalignebeam.rootrc");
-  const char *outdir = cenv.GetValue("mosalignebeam.outdir"         , "..");
+  TEnv cenv("mosalignbeamenv");
+  gEDBDEBUGLEVEL     = cenv.GetValue("mosalignbeam.EdbDebugLevel" , 1);
+  const char *env    = cenv.GetValue("mosalignbeam.env"            , "mosalignbeam.rootrc");
+  const char *outdir = cenv.GetValue("mosalignbeam.outdir"         , "..");
   
   bool      do_single   = false;
   bool      do_set      = false;
@@ -136,25 +140,27 @@ int main(int argc, char* argv[])
   if(  do_single&&do_set )   { print_help_message(); return 0; }
 
   set_default_link(cenv);
-  cenv.SetValue("mosalignebeam.env"            , env);
-  cenv.ReadFile( cenv.GetValue("mosalignebeam.env"   , "mosalignebeam.rootrc") ,kEnvLocal);
-  cenv.SetValue("mosalignebeam.outdir"         , outdir);
+  cenv.SetValue("mosalignbeam.env"            , env);
+  cenv.ReadFile( cenv.GetValue("mosalignbeam.env"   , "mosalignbeam.rootrc") ,kEnvLocal);
+  cenv.SetValue("mosalignbeam.outdir"         , outdir);
 
   EdbScanProc sproc;
-  sproc.eProcDirClient = cenv.GetValue("mosalignebeam.outdir","..");
-  cenv.WriteFile("mosalignebeam.save.rootrc");
+  sproc.eProcDirClient = cenv.GetValue("mosalignbeam.outdir","..");
+  cenv.WriteFile("mosalignbeam.save.rootrc");
 
   printf("\n----------------------------------------------------------------------------\n");
-  printf("mosalignebeam  %s\n"      ,id.AsString()	   );
+  printf("mosalignbeam  %s\n"      ,id.AsString()	   );
   printf(  "----------------------------------------------------------------------------\n\n");
 
+  do_make_ab0 = cenv.GetValue("fedra.mosalignbeam.make_ab0",0);
+  do_make_ab1 = cenv.GetValue("fedra.mosalignbeam.make_ab1",0);
 
   if(do_single)
   {
     AlignToBeam(id, cenv);
   }
 
-  cenv.WriteFile("mosalignebeam.save.rootrc");
+  cenv.WriteFile("mosalignbeam.save.rootrc");
   return 1;
 }
 
@@ -227,14 +233,16 @@ bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLaye
   av.eDZ          = 0.;
   av.eDPHI        = 0.0;
   av.eDoFine      = 1;
-  av.eSaveCouples = 1;
-  av.SetSigma( 0.3, 0.015 );
+  if(do_make_ab0) av.eSaveCouples = 1;
+  else            av.eSaveCouples = 0;
+  av.SetSigma( 0.3, 0.025 );
   av.eDoublets[0] = av.eDoublets[1]=0.01;
   av.eDoublets[2] = av.eDoublets[3]=0.0001;
   av.eDoCorrectAngle = false;  
   av.eSaveCouples=0;
   
-  av.InitOutputFile( Form( "p%.3d/%d_%d.ab0.root", p1.ScanID().ePlate, p1.ID(), p2.ID() ) ); 
+  if(do_make_ab0) 
+    av.InitOutputFile( Form( "p%.3d/%d_%d.ab0.root", p1.ScanID().ePlate, p1.ID(), p2.ID() ) ); 
   av.Align( p1, p2, 0, flag); //-190
   EdbAffine2D *affXY = av.eCorrL[0].GetAffineXY();
   EdbAffine2D *affTXTY = av.eCorrL[0].GetAffineTXTY();
@@ -270,10 +278,14 @@ bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLaye
 void TuneShrinkage( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, TEnv &env)
 {
   EdbLinking link;
-  link.InitOutputFile( Form( "p%.3d/%d_%d.ab1.root", p1.ScanID().ePlate, p1.ID(), p2.ID() ) );
+  if(do_make_ab1)
+  {
+    link.InitOutputFile( Form( "p%.3d/%d_%d.ab1.root", p1.ScanID().ePlate, p1.ID(), p2.ID() ) );
+  }
+  else env.SetValue("fedra.link.DumpDoubletsTree"    , false );
   link.Link( p1, p2, l1, l2, env );
   l1.SetShrinkage( l1.Shr()*link.eL1.Shr() );
   l2.SetShrinkage( l2.Shr()*link.eL2.Shr() );
-  link.CloseOutputFile();
+  if(do_make_ab1) link.CloseOutputFile();
 }
 
