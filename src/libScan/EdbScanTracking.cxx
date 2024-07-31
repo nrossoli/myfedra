@@ -267,8 +267,8 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
     tr.GetSegment(i)->SetProb( ProbSeg( *(tr.GetSegmentF(i)),  *(tr.GetSegment(i)) ) ); 
 }
   
-  //--------------------------------------------------------------------------------------
-  float EdbTrackAssembler::ProbSeg( EdbSegP &s1, EdbSegP &s2 )
+//--------------------------------------------------------------------------------------
+float EdbTrackAssembler::ProbSeg( EdbSegP &s1, EdbSegP &s2 )
 {
   // return the probability that the second segment can belong to track defined by s1
   float dtx = s1.TX() - s2.TX();
@@ -293,6 +293,26 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
     EdbSegP* seg = t?(const_cast<EdbSegP*>(t->TrackEnd())):0;
     prob = seg?(eFitter.ProbSegMCS(seg, &s2)):0;
   }
+  else if(eDoUseMCS==20) // test: why the option 2 is not selective and with 100% collision rate?
+  {
+    EdbTrackP* t = dynamic_cast<EdbTrackP*> (&s1);
+    EdbSegP* seg = t?(const_cast<EdbSegP*>(t->TrackEnd())):0;
+    if(seg) {
+      float prob1 = eFitter.ProbSegMCS(seg, &s2);
+      float chi2 = eFitter.Chi2Seg( seg, &s2 );
+
+      EdbSegP s;
+      float chi3 = eFitter.Chi2PSeg( s1, s2, s, eCond, eCond );
+      float chi0 = eFitter.Chi2SegM( s1, s2, s, eCond, eCond );
+      
+      float prob0 = (float)TMath::Prob( chi0*chi0, 4);
+      float prob2 = (float)TMath::Prob( chi2*chi2, 4);
+      float prob3 = (float)TMath::Prob( chi3*chi3, 4);
+
+      printf("prob0,prob1, prob2, prob3:  %f %f  %f  %f \n", prob0,prob1, prob2, prob3 );
+      prob=prob2;
+    }
+  }
   else if(eDoUseMCS==2)
   {
     EdbTrackP* t = dynamic_cast<EdbTrackP*> (&s1);
@@ -301,25 +321,22 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
       float chi = eFitter.Chi2Seg( seg, &s2 );
       prob = (float)TMath::Prob( chi*chi, 4);
     }
-    if(prob<0.001&&gEDBDEBUGLEVEL>2) {
-      Log(3,"EdbTrackAssembler::ProbSeg", "dx,dy,dz,dtx,dty: %f %f %f %f %f  prob= %f",dx,dy,dz,dtx,dty, prob);
-      seg->Print();
-      s2.Print();
-      eCond.Print();
-    }
-
-   }
-   else
-   {
-     EdbSegP s;
-     float chi = eFitter.Chi2SegM( s1, s2, s, eCond, eCond );
-     prob = (float)TMath::Prob( chi*chi, 4);
-   }
-   
-
-  prob *= eCond.ProbSeg( s2.Theta(), s2.W() );            // the proability component depending on the grains number
-  prob *= (float)TMath::Prob( s2.Chi2()*s2.Chi2(), 4 );   // the proability component depending on the segment strength
-
+  }
+  else if(eDoUseMCS==3)  // use coordinate information only (as for alignment)
+  {
+    EdbSegP s;
+    float chi = eFitter.Chi2PSeg( s1, s2, s, eCond, eCond );
+    prob = (float)TMath::Prob( chi*chi, 4);
+  }
+  else
+  {
+    EdbSegP s;
+    float chi = eFitter.Chi2SegM( s1, s2, s, eCond, eCond );
+    prob = (float)TMath::Prob( chi*chi, 4);
+  }
+  
+  prob *= eCond.ProbSeg( s2.Theta(), s2.W() );            // the probability component depending on the grains number
+  prob *= (float)TMath::Prob( s2.Chi2()*s2.Chi2(), 4 );   // the probability component depending on the segment strength
   return prob;
 }
   
@@ -350,8 +367,15 @@ EdbTrackP *EdbTrackAssembler::AddSegmentAsTrack(EdbSegP &s)
       
     if( t->N() < nsegmin )      continue;
     if( !AcceptDZGap(*t, z) )   continue;
-    t->MakePredictionTo(eZ,*t);                        // extrapolation of tracks itself
-      //((EdbSegP *)t)->PrintNice();
+    if(eDoUseMCS==3) 
+    {
+      if(t->N()<2) t->MakePredictionTo(eZ,*t);   // propagation with angle
+      else t->EstimatePositionAt(eZ,*t);         // propagation with coordinates
+    } 
+    else
+    {
+      t->MakePredictionTo(eZ,*t); // keep the same behaviour as before: propagation with angle
+    }
     eTrZ.Add(t);
   }
     

@@ -44,7 +44,7 @@ class EdbTrackAssembler: public TObject {
   float         eDRmax;        // position acceptance for the fast preselection
   float         eDZGapMax;     // maxgap acceptance for the fast preselection
   float         eProbMin;      // min acceptable probability for segments preselection
-  bool          eDoUseMCS;     //flag to use MultipleScattering addition for chi2 
+  int           eDoUseMCS;     //flag to use MultipleScattering addition for chi2 
 
   int            eCollisionsRate;  //
   EdbScanCond    eCond;
