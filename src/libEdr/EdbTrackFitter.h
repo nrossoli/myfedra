@@ -34,6 +34,7 @@ class EdbTrackFitter : public TNamed {
   void           SetDefaultBrick();
   int            FitTrackLine(EdbTrackP &tr);
   int            FitTrackLine(const EdbTrackP &tr, float &x,float &y,float &z,float &tx,float &ty,float &w);
+  int            Fit3Pos(EdbTrackP &tr);
 
   static float   MaxKink(EdbTrackP &tr);
   static float   MeanKink(EdbTrackP &tr);

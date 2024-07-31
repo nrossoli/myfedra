@@ -252,6 +252,7 @@ class EdbTrackP : public EdbSegP {
   int   SetSegmentsTrack() {return SetSegmentsTrack(ID());}
   int   FitTrackKFS( bool zmax=false, float X0=5810., int design = 0 );
   int   MakeSelector( EdbSegP &ss, bool followZ=true );
+  int   EstimatePositionAt( Float_t z, EdbSegP &ss );
   float MakePredictionTo( Float_t z, EdbSegP &ss );
   float CHI2();
   float CHI2F();

@@ -23,5 +23,6 @@
 #pragma link C++ class EdbVertexSpace;
 
 #pragma link C++ class EdbPlateTracking;
+#pragma link C++ class EdbUnbender;
 
 #endif

@@ -583,3 +583,27 @@ int EdbTrackFitter::RMSprojXY( EdbTrackP &tr, float &ex, float &ey )
   }
   return EdbMath::LFIT3(x,y,z,w,nseg,x0,y0,z0,tx,ty,ex,ey);
 }
+
+//______________________________________________________________________________
+int EdbTrackFitter::Fit3Pos( EdbTrackP &tr )
+{
+  // fit track by straight line using coordinates only and update track parameters
+  int nseg=tr.N();
+  float x[100], y[100], z[100], w[100];
+  float x0,y0,z0,tx,ty,ex,ey;
+  for(int i=0; i<nseg; i++) {
+    EdbSegP *s = tr.GetSegment(i);
+    x[i]=s->X();
+    y[i]=s->Y();
+    z[i]=s->Z();
+    w[i]=s->W();
+  }
+  int rv=EdbMath::LFIT3(x,y,z,w,nseg,x0,y0,z0,tx,ty,ex,ey);
+  tr.SetX(x0);
+  tr.SetY(y0);
+  tr.SetZ(z0);
+  tr.SetTX(tx);
+  tr.SetTY(ty);
+//TODO errors
+  return rv;
+}

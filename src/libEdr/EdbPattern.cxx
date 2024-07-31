@@ -1090,6 +1090,39 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
 }
 
 ///______________________________________________________________________________
+int EdbTrackP::EstimatePositionAt( Float_t z, EdbSegP &ss )
+{
+  // use coordinates of 2 nearest to z points for track extrapolation
+  // TODO: dz=0: mean?
+  if( N()<2 ) return 0;
+  EdbSegP *s1=0,*s2=0;
+  float   dz1,dz2;   dz1=dz2=kMaxInt;
+  for(int i=0; i<N(); i++)
+  {
+    EdbSegP *s = GetSegment(i);
+    float dz = Abs(s->Z()-z);
+    if( dz < dz1 ) { dz1 = dz; s1=s; }
+  }
+  for(int i=0; i<N(); i++)
+  {
+    EdbSegP *s = GetSegment(i);
+    float dz = Abs(s->Z()-z);
+    if( dz < dz2 && s != s1 ) { dz2 = dz; s2=s; }
+  }
+  float dz0 = s2->Z()-s1->Z();
+  if(abs(dz0)<0.000000001) return 0;
+  float dx0 = s2->X()-s1->X();
+  float dy0 = s2->Y()-s1->Y();
+  float dz  = z-s1->Z();
+  ss.SetX( s1->X() + dz*dx0/dz0 );
+  ss.SetY( s1->Y() + dz*dy0/dz0 );
+  ss.SetZ( z );
+  ss.SetTX( dx0/dz0 );
+  ss.SetTY( dy0/dz0 );
+  return 1;
+}
+
+///______________________________________________________________________________
 float   EdbTrackP::MakePredictionTo( Float_t z, EdbSegP &ss )
 {
   float dz = Zmax()-Zmin();
