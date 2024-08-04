@@ -98,7 +98,10 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   // Input: p1,p2 - patterns, l1,l2 layers, env - linking parameters
 
   Log(2,"EdbLinking::Link","patterns with %d and %d segments and z1 = %f  z2 = %f",p1.N(),p2.N(),l1.Z(),l2.Z());
-  Log(2,"EdbLinking::Link","segments z1 = %f  z2 = %f",p1.GetSegment(0)->Z(),p2.GetSegment(0)->Z());
+  if(p1.N()<=0) return;
+  if(p2.N()<=0) return;
+  Log(2,"EdbLinking::Link","segments z1 = %f  z2 = %f",
+      p1.GetSegment(0)->Z(),p2.GetSegment(0)->Z());
 
   GetPar(env);
   eL1.Copy(l1,true);
@@ -106,6 +109,7 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
 
   if(area1<=0) area1 = EstimatePatternArea(p1);
   if(area2<=0) area2 = EstimatePatternArea(p2);
+  if(area1<0.0000001||area2<0.0000001) return;
   EdbSEQ seq1;  seq1.eArea = area1;
   EdbSEQ seq2;  seq2.eArea = area2;
   GetPreselectionPar(seq1,env);
@@ -114,28 +118,34 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   seq2.eNsigma=eNsigmaEQshr;
   if(gEDBDEBUGLEVEL>1) seq1.PrintLimits();
   
-  TH1F *hTall1 = seq1.ThetaPlot(p1   , "hTall1","Theta plot all, side 1 "); hTall1->Write();
-  TH1F *hTall2 = seq2.ThetaPlot(p2   , "hTall2","Theta plot all, side 2 "); hTall2->Write();
-
+  if(eOutputFile) 
+  {
+    TH1F *hTall1 = seq1.ThetaPlot(p1   , "hTall1","Theta plot all, side 1 "); 
+    hTall1->Write();
+    TH1F *hTall2 = seq2.ThetaPlot(p2   , "hTall2","Theta plot all, side 2 "); 
+    hTall2->Write();
+  }
   TObjArray  p1pre(p1.N());  seq1.PreSelection(p1,p1pre);
   TObjArray  p2pre(p2.N());  seq2.PreSelection(p2,p2pre);
   Log(2,"EdbLinking::Link","after preselection: n1pre = %d  n2pre = %d", p1pre.GetEntries(),p2pre.GetEntries() );
+  if(p1pre.GetEntries()<=0) return;
+  if(p2pre.GetEntries()<=0) return;
   DoubletsFilterOut(p1pre,p2pre);
   
   TObjArray  p1shr,p2shr;
   
   if(eDoCorrectShrinkage || eDoCorrectAngles) {
     seq1.EqualizeMT(p1pre, p1shr, area1);
-    TH1F *hTshr1 = seq1.ThetaPlot(p1shr, "hTshr1","Theta plot shr, side 1 "); hTshr1->Write();
-    seq1.eHEq.DrawH1("eHEq1","eHEq1")->Write();
-
     seq2.EqualizeMT(p2pre, p2shr, area2);
-    TH1F *hTshr2 = seq2.ThetaPlot(p2shr, "hTshr2","Theta plot shr, side 2 "); hTshr2->Write();
-    seq2.eHEq.DrawH1("eHEq2","eHEq2")->Write();
-    
-    //    DoubletsFilterOut(p1shr,p2shr);
-    FillCombinationsAtMeanZ(p1shr,p2shr);
     Log(2,"EdbLinking::Link","A n1shr = %d  n2shr = %d", p1shr.GetEntries(),p2shr.GetEntries() );
+    if(eOutputFile)
+    {
+      TH1F *hTshr1 = seq1.ThetaPlot(p1shr, "hTshr1","Theta plot shr, side 1 "); hTshr1->Write();
+      seq1.eHEq.DrawH1("eHEq1","eHEq1")->Write();
+      TH1F *hTshr2 = seq2.ThetaPlot(p2shr, "hTshr2","Theta plot shr, side 2 "); hTshr2->Write();
+      seq2.eHEq.DrawH1("eHEq2","eHEq2")->Write();
+    }
+    FillCombinationsAtMeanZ(p1shr,p2shr);
   }
   if(eDoCorrectShrinkage) {
     eCorr[0].SetV(5,eShr0);
@@ -150,24 +160,30 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
     CorrectShrinkage(  eDShr*0.5 );
     CorrectShrinkage(  eDShr*0.5 );
     CorrectShrinkage(  eDShr*0.5 );
-    WriteShrinkagePlots();
+    if(eOutputFile) WriteShrinkagePlots();
   }
   if(eDoCorrectAngles)    CorrectAngles( p1shr,p2shr );
   if(eDoCorrectAngles)    CorrectAngles( p1shr,p2shr );
   if(eDoCorrectShrinkage || eDoCorrectAngles) {
-    ePC[0].DrawH2("hxy_shr1","xy for the shrinkage corr sample side 1")->Write();
-    ePC[1].DrawH2("hxy_shr2","xy for the shrinkage corr sample side 2")->Write();
-    EdbH2 htxy1(50,-1,1,50,-1,1);
-    FillThetaHist(0,htxy1);
-    htxy1.DrawH2("htxy_shr1","txy plot for shr corr sample side 1");
-    EdbH2 htxy2(50,-1,1,50,-1,1);
-    FillThetaHist(0,htxy2);
-    htxy2.DrawH2("htxy_shr2","txy plot for shr corr sample side 2");
+    if(eOutputFile)
+    {
+      ePC[0].DrawH2("hxy_shr1","xy for the shrinkage corr sample side 1")->Write();
+      ePC[1].DrawH2("hxy_shr2","xy for the shrinkage corr sample side 2")->Write();
+      EdbH2 htxy1(50,-1,1,50,-1,1);
+      FillThetaHist(0,htxy1);
+      htxy1.DrawH2("htxy_shr1","txy plot for shr corr sample side 1");
+      EdbH2 htxy2(50,-1,1,50,-1,1);
+      FillThetaHist(0,htxy2);
+      htxy2.DrawH2("htxy_shr2","txy plot for shr corr sample side 2");
+    }
   }
   
-  eCorr[0].Write("corr1");
-  eCorr[1].Write("corr2");
-
+  if(eOutputFile) 
+  {
+    eCorr[0].Write("corr1");
+    eCorr[1].Write("corr2");
+  }
+  
   if(eDoFullLinking)   {
     TObjArray p1lnk(p1pre.GetEntriesFast());
     TObjArray p2lnk(p2pre.GetEntriesFast());
@@ -180,17 +196,20 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
       p1lnk=p1pre;
       p2lnk=p2pre;
     }
-    //    DoubletsFilterOut(p1lnk,p2lnk, 1);
-    
-    TH1F *hTlnk1 = seq1.ThetaPlot(p1lnk, "hTlnk1","Theta plot lnk, side 1 "); hTlnk1->Write();
-    TH1F *hTlnk2 = seq2.ThetaPlot(p2lnk, "hTlnk2","Theta plot lnk, side 2 "); hTlnk2->Write();
-    
+
     FullLinking(p1lnk,p2lnk);
-    ePC[0].DrawH2("hxy_full1","xy full 1")->Write();
-    ePC[1].DrawH2("hxy_full2","xy full 2")->Write();
+    if(eOutputFile)
+    {
+      TH1F *hTlnk1 = seq1.ThetaPlot(p1lnk, "hTlnk1","Theta plot lnk, side 1 ");
+      hTlnk1->Write();
+      TH1F *hTlnk2 = seq2.ThetaPlot(p2lnk, "hTlnk2","Theta plot lnk, side 2 ");
+      hTlnk2->Write();
+      ePC[0].DrawH2("hxy_full1","xy full 1")->Write();
+      ePC[1].DrawH2("hxy_full2","xy full 2")->Write();
+    }
   }
 
-  ProduceReport();
+  if(eOutputFile) ProduceReport();
   Corr2Aff(eCorr[0],eL1);
   Corr2Aff(eCorr[1],eL2);
   //eL1.Print();                     // layers with the corrections

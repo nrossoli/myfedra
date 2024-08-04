@@ -11,7 +11,7 @@ class EdbLinking : public EdbAlignmentV
 {
  public:
   
-   bool   eDoSaveCouples;
+   bool   eDoSaveCouples;     // save couples and report histograms
    bool   eDoCorrectAngles;
    bool   eDoCorrectShrinkage;
    bool   eDoFullLinking;

@@ -52,7 +52,7 @@ class EdbAlignmentV : public TObject
   void    AssignFlagToS(int flag);
    
   // Selector functions
-  void    DefineGuessCell( float xmin1, float xmax1, float ymin1, float ymax1, 
+  bool    DefineGuessCell( float xmin1, float xmax1, float ymin1, float ymax1, 
 					float xmin2, float xmax2, float ymin2, float ymax2, int np1, int np2, float binOK);
   void    InitPatCellN(   EdbCell2 &cell, EdbPattern &pat, int nx,     int ny);
   void    InitPatCellBin( int side, EdbPattern &pat, float binx, float biny);

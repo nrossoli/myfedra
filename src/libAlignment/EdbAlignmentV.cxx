@@ -879,25 +879,23 @@ void  EdbAlignmentV::ApplyLimitsOffset( float &xmin1, float &xmax1, float &xmin2
 }
 
 //---------------------------------------------------------------------
-void  EdbAlignmentV::DefineGuessCell( float xmin1, float xmax1, float ymin1, float ymax1, 
+bool  EdbAlignmentV::DefineGuessCell( float xmin1, float xmax1, float ymin1, float ymax1, 
                                       float xmin2, float xmax2, float ymin2, float ymax2, int np1, int np2, float binOK)
 {
   float s1 = (xmax1-xmin1)*(ymax1-ymin1);
   float xbin1 = Sqrt( s1/(np1/binOK)  );
-  
   float s2 = (xmax2-xmin2)*(ymax2-ymin2);
-  float xbin2 = Sqrt( s2/(np2/binOK)  );
-  
+  float xbin2 = Sqrt( s2/(np2/binOK)  );  
   float xbin = Min(xbin1,xbin2);
-
   float min[2] = { Min(xmin1,xmin2)-eXmarg, Min(ymin1,ymin2)-eYmarg };
   float max[2] = { Max(xmax1,xmax2)+eXmarg, Max(ymax1,ymax2)+eYmarg };
   int   n[2]   = { (int)((max[0]-min[0])/xbin+1), (int)((max[1]-min[1])/xbin+1) };
-  
+  if(n[0]<=0||n[1]<=0) return false;
   int maxcell1 = np1/n[0]/n[1]+10;   maxcell1 += (int)(5*Sqrt(maxcell1));
   ePC[0].InitCell(maxcell1,n,min,max);
   int maxcell2 = np2/n[0]/n[1]+10;    maxcell2 += (int)(5*Sqrt(maxcell2));
   ePC[1].InitCell(maxcell2,n,min,max);
+  return true;
 }
 
 //---------------------------------------------------------------------
@@ -911,21 +909,25 @@ void  EdbAlignmentV::FillGuessCell( EdbPattern &p1, EdbPattern &p2, float binOK,
   Log(3, "FillGuessCell", "x2:(%f %f) y2:(%f %f)",xmin2,xmax2, ymin2, ymax2);
   ApplyLimitsOffset( xmin1, xmax1, xmin2, xmax2, offsetMax);
   ApplyLimitsOffset( ymin1, ymax1, ymin2, ymax2, offsetMax);
-  if( xmax1<xmin1||ymax1<ymin1||xmax2<xmin2||ymax2<ymin2 ) {
-    Log(1, "FillGuessCell", "No any overlap! x1:(%f %f) y1:(%f %f)",xmin1,xmax1, ymin1, ymax1);
-    Log(1, "FillGuessCell", "No any overlap! x2:(%f %f) y2:(%f %f)",xmin2,xmax2, ymin2, ymax2);
+  int np1 = p1.N(), np2 = p2.N();    
+  if( xmax1<xmin1||ymax1<ymin1||xmax2<xmin2||ymax2<ymin2||np1<1||np2<1 ) {
+    Log(1, "FillGuessCell", "No any overlap! x1:(%f %f) y1:(%f %f) np1:%d",
+	xmin1,xmax1, ymin1, ymax1,np1);
+    Log(1, "FillGuessCell", "No any overlap! x2:(%f %f) y2:(%f %f) np2:%d",
+	xmin2,xmax2, ymin2, ymax2,np2);
   } else
   {
-    int np1 = p1.N(), np2 = p2.N();
-    
-    DefineGuessCell( xmin1, xmax1, ymin1, ymax1, xmin2, xmax2, ymin2, ymax2, np1, np2, binOK);
-    
-    FillCell( 0, p1 );
-    FillCell( 1, p2 );
-    
-    if( Log(3, "FillGuessCell", "with patterns of %d %d  statistics:",np1,np2) ) {
-      ePC[0].PrintStat();
-      ePC[1].PrintStat();
+    if(DefineGuessCell( 
+      xmin1, xmax1, ymin1, ymax1, 
+      xmin2, xmax2, ymin2, ymax2, 
+      np1, np2, binOK))
+    {
+      FillCell( 0, p1 );
+      FillCell( 1, p2 ); 
+      if( Log(3, "FillGuessCell", "with patterns of %d %d  statistics:",np1,np2) ) {
+	ePC[0].PrintStat();
+	ePC[1].PrintStat();
+      }
     }
   }
 }
@@ -942,15 +944,27 @@ void  EdbAlignmentV::FillGuessCell( TObjArray &p1, TObjArray &p2, float binOK, f
   int np1 = p1.GetEntries(), np2 = p2.GetEntries();
 
   Log(3, "FillGuessCell", "xmin1, xmax1, ymin1, ymax1, xmin2, xmax2, ymin2, ymax2, np1, np2, binOK: %f %f %f %f   %f %f %f %f   %d %d   %f",xmin1, xmax1, ymin1, ymax1, xmin2, xmax2, ymin2, ymax2, np1, np2, binOK);
-  DefineGuessCell( xmin1, xmax1, ymin1, ymax1, xmin2, xmax2, ymin2, ymax2, np1, np2, binOK);
-
-  FillCell( 0, p1 );
-  FillCell( 1, p2 );
-
-  if( Log(3, "FillGuessCell", "with arrays of %d %d  statistics:",np1,np2) ) {
-    ePC[0].PrintStat();
-    ePC[1].PrintStat();
+  if( xmax1<xmin1||ymax1<ymin1||xmax2<xmin2||ymax2<ymin2||np1<1||np2<1 ) {
+    Log(1, "FillGuessCell", "No any overlap! x1:(%f %f) y1:(%f %f) np1:%d",
+	xmin1,xmax1, ymin1, ymax1,np1);
+    Log(1, "FillGuessCell", "No any overlap! x2:(%f %f) y2:(%f %f) np2:%d",
+	xmin2,xmax2, ymin2, ymax2,np2);
+  } else
+  {
+    if(DefineGuessCell( 
+      xmin1, xmax1, ymin1, ymax1, 
+      xmin2, xmax2, ymin2, ymax2, 
+      np1, np2, binOK))
+    {     
+      FillCell( 0, p1 );
+      FillCell( 1, p2 );      
+      if( Log(3, "FillGuessCell", "with arrays of %d %d  statistics:",np1,np2) ) {
+	ePC[0].PrintStat();
+	ePC[1].PrintStat();
+      }
+    }
   }
+  
 }
 
 //---------------------------------------------------------------------

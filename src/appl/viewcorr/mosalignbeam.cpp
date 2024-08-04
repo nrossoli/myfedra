@@ -44,8 +44,8 @@ void set_default_link(TEnv &cenv)
   // default parameters for the new linking
   
 
-  cenv.SetValue("fedra.mosalignbeam.make_ab0"   ,  1   );   // produce debug output (beam)
-  cenv.SetValue("fedra.mosalignbeam.make_ab1"   ,  1   );   // produce debig output (shrinkage)
+  cenv.SetValue("fedra.mosalignbeam.make_ab0"   ,  0   );   // produce debug output (beam)
+  cenv.SetValue("fedra.mosalignbeam.make_ab1"   ,  0   );   // produce debig output (shrinkage)
   
   cenv.SetValue("fedra.link.AFID"                ,  1   );   // 1 is usually fine for scanned data; for the db-read data use 0!
   cenv.SetValue("fedra.link.DoImageCorr"         , 0  );
@@ -187,31 +187,36 @@ int AlignToBeam( EdbID id, TEnv &cenv )
   {
     EdbLayer   *l1 = mapside1->Map().GetLayer(i);
     EdbLayer   *l2 = mapside2->Map().GetLayer(i);
-    if(!use_saved_alignment) 
+    if(l1&&l2) 
     {
-      l1->GetAffineXY()->Reset();
-      l2->GetAffineXY()->Reset();
-      l1->GetAffineTXTY()->Reset();
-      l2->GetAffineTXTY()->Reset();
-    }
-    l1->SetZ( mapside1->Z() );   // base thicknes is considered fixed...
-    l2->SetZ( mapside2->Z() );    
-    EdbPattern *p1 = mio.GetFragment( id.ePlate, 1, i, use_saved_alignment ); //get side 1
-    EdbPattern *p2 = mio.GetFragment( id.ePlate, 2, i, use_saved_alignment ); //get side 2
-    p1->SetScanID(id);
-    p2->SetScanID(id);
-    p1->SetSegmentsFlag(0);
-    p2->SetSegmentsFlag(0);
-    Log(1,"mosalignbeam::AlignFragmentToBeam","fragment %d: %d & %d", p1->ID(), p1->N(),p2->N() );
-
-    AlignFragmentToBeam0(*p2, *p1, *l2,*l1, 10  );  //align 2 to 1 using parallel beam tracks
-    AlignFragmentToBeam0(*p2, *p1, *l2,*l1,  5  );  //align 2 to 1 using parallel beam tracks
-    AlignFragmentToBeam0(*p2, *p1, *l2,*l1,  3, -10);  //align 2 to 1 using parallel beam tracks, exclude segs by flag
-    
-    TuneShrinkage(*p2, *p1, *l2,*l1, cenv); // shrinkage correction using non-beam tracks
-    
-    delete p1;
-    delete p2;
+      if(!use_saved_alignment) 
+      {
+	l1->GetAffineXY()->Reset();
+	l2->GetAffineXY()->Reset();
+	l1->GetAffineTXTY()->Reset();
+	l2->GetAffineTXTY()->Reset();
+      }
+      l1->SetZ( mapside1->Z() );   // base thicknes is considered fixed...
+      l2->SetZ( mapside2->Z() );    
+      EdbPattern *p1 = mio.GetFragment( id.ePlate, 1, i, use_saved_alignment ); //get side 1
+      EdbPattern *p2 = mio.GetFragment( id.ePlate, 2, i, use_saved_alignment ); //get side 2
+      if(p1&&p2) 
+      { 
+	p1->SetScanID(id);
+	p2->SetScanID(id);
+	p1->SetSegmentsFlag(0);
+	p2->SetSegmentsFlag(0);
+	Log(1,"mosalignbeam::AlignFragmentToBeam","fragment %d: %d & %d", p1->ID(), p1->N(),p2->N() );
+	
+	AlignFragmentToBeam0(*p2, *p1, *l2,*l1, 10  );  //align 2 to 1 using parallel beam tracks
+	AlignFragmentToBeam0(*p2, *p1, *l2,*l1,  5  );  //align 2 to 1 using parallel beam tracks
+	AlignFragmentToBeam0(*p2, *p1, *l2,*l1,  3, -10);  //align 2 to 1 using parallel beam tracks, exclude segs by flag
+	
+	TuneShrinkage(*p2, *p1, *l2,*l1, cenv); // shrinkage correction using non-beam tracks
+      }
+      SafeDelete(p1);
+      SafeDelete(p2);
+    }    
   }
   mio.SaveCorrMap( id.ePlate, 1, *mapside1,  file.Data() );
   mio.SaveCorrMap( id.ePlate, 2, *mapside2,  file.Data() ); 
