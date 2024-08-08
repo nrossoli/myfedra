@@ -87,7 +87,6 @@ void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz, int flag
 
   if(eDoCoarse) {
     SetParCoarseAl( eCorr[0].V(2) , eOffsetMax, 3*eSigma[1], eDZ, eDPHI );
-    //SetParCoarseAl( eCorr[0].V(2) , 3*eSigma[0], 3*eSigma[1], eDZ, eDPHI );
     CoarseAl(p1,p2);
     if(!eCoarseOK)    goto END;
   }

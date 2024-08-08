@@ -130,7 +130,7 @@ bool EdbCouplesTree::InitCouplesTree(const char *name, const char *fname, Option
   Log(2,"EdbCouplesTree::InitCouplesTree","create new tree %s in %s",name, fn);  
   
   eTree = new TTree(name, "couples tree (s1:s2:s)");
-  eTree->SetMaxTreeSize(15000000000LL);   //set 15 Gb file size limit)
+  eTree->SetMaxTreeSize(64000000000LL);   //set 64 Gb file size limit)
   
   eTree->Branch("pid1",  &ePid1,"pid1/I");
   eTree->Branch("pid2",  &ePid2,"pid2/I");

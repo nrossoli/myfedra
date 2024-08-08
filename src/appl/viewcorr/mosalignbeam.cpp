@@ -90,6 +90,8 @@ void set_default_link(TEnv &cenv)
 
 bool do_make_ab0;
 bool do_make_ab1;
+int       from_fragment=0;
+int       n_fragments=0;
 
 int main(int argc, char* argv[])
 {
@@ -104,8 +106,6 @@ int main(int argc, char* argv[])
   bool      do_set      = false;
   bool      do_merge    = false;
   EdbID     id;
-  int       from_fragment=0;
-  int       n_fragments=1000000;
 
   for(int i=1; i<argc; i++ ) {
     char *key  = argv[i];
@@ -180,10 +180,21 @@ int AlignToBeam( EdbID id, TEnv &cenv )
   mapside1->SetZ( 97.5); // TODO take it from set.root
   mapside2->SetZ(-97.5);
   
+  int first,last;
   int nc=mapside2->Map().Ncell();
-  Log(1,"mosalignbeam::AlignToBeam","with %d fragments",nc);
+  if(from_fragment==0&&n_fragments==0) 
+  {
+    first=0; 
+    last=first+nc;
+  } else
+  {
+    first=from_fragment;
+    last=first+n_fragments;
+  }
+  Log(1,"mosalignbeam::AlignToBeam","with %d fragments [%d:%d] out of %d",
+      last-first+1, first,last,nc);
 
-  for( int i=0; i<nc; i++ )
+  for( int i=first; i<=last; i++ )
   {
     EdbLayer   *l1 = mapside1->Map().GetLayer(i);
     EdbLayer   *l2 = mapside2->Map().GetLayer(i);
@@ -196,7 +207,7 @@ int AlignToBeam( EdbID id, TEnv &cenv )
 	l1->GetAffineTXTY()->Reset();
 	l2->GetAffineTXTY()->Reset();
       }
-      l1->SetZ( mapside1->Z() );   // base thicknes is considered fixed...
+      l1->SetZ( mapside1->Z() );   // base thickness is considered fixed...
       l2->SetZ( mapside2->Z() );    
       EdbPattern *p1 = mio.GetFragment( id.ePlate, 1, i, use_saved_alignment ); //get side 1
       EdbPattern *p2 = mio.GetFragment( id.ePlate, 2, i, use_saved_alignment ); //get side 2
@@ -219,7 +230,8 @@ int AlignToBeam( EdbID id, TEnv &cenv )
     }    
   }
   mio.SaveCorrMap( id.ePlate, 1, *mapside1,  file.Data() );
-  mio.SaveCorrMap( id.ePlate, 2, *mapside2,  file.Data() ); 
+  mio.SaveCorrMap( id.ePlate, 2, *mapside2,  file.Data() );
+  Log(1,"mosalignbeam","%s maps saved into %s",id.AsString(),file.Data());
 }
 
 //-----------------------------------------------------------------------
@@ -291,6 +303,7 @@ void TuneShrinkage( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, 
   link.Link( p1, p2, l1, l2, env );
   l1.SetShrinkage( l1.Shr()*link.eL1.Shr() );
   l2.SetShrinkage( l2.Shr()*link.eL2.Shr() );
+  Log(1,"mosalignbeam:TuneShrinkage","%f %f",l1.Shr(),l2.Shr());
   if(do_make_ab1) link.CloseOutputFile();
 }
 
