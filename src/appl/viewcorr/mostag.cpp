@@ -42,6 +42,7 @@ OutHist gOH = {0,0,0,0};
 
 bool do_save_gif=false;
 bool do_save_canvas=false;
+int  nPatMin=0;
 
 void print_help_message()
 {
@@ -68,6 +69,7 @@ void set_default(TEnv &cenv)
 
   cenv.SetValue("fedra.tag.RemoveDoublets"      , "1    2. .01   1");  //yes/no   dr  dt  checkview(0,1,2)
   cenv.SetValue("fedra.tag.DumpDoubletsTree"    , false );
+  cenv.SetValue("fedra.tag.nPatMin"    , 1000 );
 
   cenv.SetValue("mostag.outdir"          , "..");
   cenv.SetValue("mostag.env"             , "mostag.rootrc");
@@ -127,6 +129,7 @@ int main(int argc, char* argv[])
   cenv.WriteFile("mostag.save.rootrc");
   do_save_gif   = cenv.GetValue("fedra.tag.save_gif"            ,  false   );
   do_save_canvas = cenv.GetValue("fedra.tag.save_canvas"          ,  false   );
+  nPatMin = cenv.GetValue("fedra.tag.nPatMin"          ,  1000 );
   
   printf("\n----------------------------------------------------------------------------\n");
   printf("mostag  %s\n"      ,id.AsString()	   );
@@ -200,7 +203,7 @@ void TagSide( EdbID id, int from, int nfrag, int side, TEnv &cenv, EdbMosaicIO &
   for( int i=from; i<from+nfrag; i++ )
   {
     EdbPattern *p = mio.GetFragment( id.ePlate, side, i, true); // (plate,side,id)
-    if(p) 
+    if(p) if(p->N()>nPatMin)
     {
       p->SetScanID(id);
       DoubletsFilterOut(*p, omio);

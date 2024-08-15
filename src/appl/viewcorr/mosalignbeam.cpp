@@ -192,9 +192,9 @@ int AlignToBeam( EdbID id, TEnv &cenv )
     last=first+n_fragments;
   }
   Log(1,"mosalignbeam::AlignToBeam","with %d fragments [%d:%d] out of %d",
-      last-first+1, first,last,nc);
+      last-first, first,last-1,nc);
 
-  for( int i=first; i<=last; i++ )
+  for( int i=first; i<last; i++ )
   {
     EdbLayer   *l1 = mapside1->Map().GetLayer(i);
     EdbLayer   *l2 = mapside2->Map().GetLayer(i);
