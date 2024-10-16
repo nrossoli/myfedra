@@ -515,6 +515,44 @@ int EdbScanProc::AlignNewNopar(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *af
   return npat;
 }
 
+//-------------------------------------------------------------------
+int EdbScanProc::AlignNewCPFiles(const char *f1, const char *f2, TEnv &cenv, EdbAffine2D *aff, float dz)
+{
+  // Align 2 patterns taken from files. All necessary information should be in the envfile
+  // Convension about Z(setted while process): the z of id2 is 0, the z of id1 is (-deltaZ) where
+  // deltaZ readed from aff.par file in a way that pattern of id1 projected 
+  // to deltaZ correspond to pattern of id2
+
+  int npat=0;
+  
+  EdbPlateAlignment av;
+  av.eOffsetMax =   cenv.GetValue("fedra.align.OffsetMax"   , 500. );
+  av.SetSigma(      cenv.GetValue("fedra.align.SigmaR"      , 13.  ), 
+	            cenv.GetValue("fedra.align.SigmaT"      , 0.008) );
+  av.eDoFine      = cenv.GetValue("fedra.align.DoFine"      , 1);
+  av.eDZ          = cenv.GetValue("fedra.align.DZ"          , 120.);
+  av.eDPHI        = cenv.GetValue("fedra.align.DPHI"        , 0.008 );
+  const char *cut = cenv.GetValue("fedra.readCPcut"         , "eCHI2P<2.5&&s.eW>18&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.5");
+  const char *cutA = cenv.GetValue("fedra.readCPcutA"         , "1");
+  const char *cutB = cenv.GetValue("fedra.readCPcutB"         , "1");
+  av.eSaveCouples = cenv.GetValue("fedra.align.SaveCouples" , 1);
+
+  EdbPattern p1,p2;
+  ReadPatCPnopar( p1, f1, Form("(%s)&&(%s)",cut,cutA) );
+  ReadPatCPnopar( p2, f2, Form("(%s)&&(%s)",cut,cutB) );
+  if(aff) { aff->Print(); p1.Transform(aff);}
+ 
+//  TString dataout;  MakeAffName(dataout,id1,id2,"al.root");
+  av.InitOutputFile( "a_b.al.root" );
+  av.Align( p1, p2 , dz);
+  av.CloseOutputFile();
+//  UpdateAFFPar( id1, id2, av.eCorrL[0], aff );
+
+  av.eCorrL[0].Print();
+  
+  return npat;
+}
+
 //----------------------------------------------------------------
 void EdbScanProc::CheckSetQualityRaw( EdbID idss )
 {

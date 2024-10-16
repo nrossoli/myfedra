@@ -61,6 +61,7 @@ void EdbMosaicAl::ProcRun( EdbID id, const TEnv &env )
   float fx = env.GetValue("fedra.vsa.Xfrag" , 10000);
   float fy = env.GetValue("fedra.vsa.Yfrag" , 5000);
   eMinPeak = env.GetValue("fedra.vsa.MinPeak" , 20);  
+  SetAlPar( env, eAP );
 
   EdbViewMap vm;
   vm.ReadViewsHeaders(fin.Data(), cut);    // read headers from runfile, fill eViewHeaders
@@ -72,8 +73,6 @@ void EdbMosaicAl::ProcRun( EdbID id, const TEnv &env )
 		  id.ePlate, id.eBrick, id.ePlate, id.eMajor, id.eMinor), 
 	     "RECREATE");
   
-  SetAlPar( env, eAP );
-
   AlignFragments();
 
   if(eCorrMap[1]) eMIO.SaveCorrMap(id.ePlate, 1, *eCorrMap[1]);
@@ -87,13 +86,13 @@ void EdbMosaicAl::ProcRun( EdbID id, const TEnv &env )
 void EdbMosaicAl::SetAlPar( const TEnv &env, AlPar &ap )
 {
   ap.NoScaleRot    = 1;                // calculate shift only
-  ap.OffsetMax     = 15.;
-  ap.DZ            = 0;
-  ap.DPHI          = 0;
-  ap.DoFine        = 1;
-  ap.DoSaveCouples = 1;
-  ap.SigmaR        = 0.5; 
-  ap.SigmaT        = 0.005;
+  ap.OffsetMax     = env.GetValue("fedra.vsa.offsetMax",15);
+  ap.DZ            = env.GetValue("fedra.vsa.DZ",0);
+  ap.DPHI          = env.GetValue("fedra.vsa.DPHI",0);
+  ap.DoFine        = env.GetValue("fedra.vsa.DoFine",1);
+  ap.DoSaveCouples = env.GetValue("fedra.vsa.SaveCouples",1);
+  ap.SigmaR        = env.GetValue("fedra.vsa.SigmaR",0.5);
+  ap.SigmaT        = env.GetValue("fedra.vsa.SigmaT",0.005);
   ap.Doublets[0]   = ap.Doublets[1] = 0.5;
   ap.Doublets[2]   = ap.Doublets[3] = 0.005;
 }
@@ -152,11 +151,6 @@ void EdbMosaicAl::FillHXY( const EdbPattern &pf, TH2F &h )
     EdbSegP *s = pf.GetSegment(i);
     h.Fill(s->eX,s->eY);
   }
-}
-
-//-----------------------------------------------------------------------
-void EdbMosaicAl::SetAlPar( EdbFragmentAlignment &fa )
-{
 }
 
 //-----------------------------------------------------------------------
@@ -240,23 +234,16 @@ int EdbMosaicAl::ViewSideAl0(EdbPattern &p1, EdbPattern &p2)
 {
   // align AND TRANSFORM p1 to p2 RS
   
-  gEDBDEBUGLEVEL       =  1;
-  float      sigmaR    =  0.5;
-  float      sigmaT    =  0.005;
-  float      offsetMax = 15. ;
-  float      DZ        =  0.;
-  float      DPHI      =  0.;
-  
+//  gEDBDEBUGLEVEL       =  1;
   EdbPlateAlignment av;
   av.eNoScaleRot=1;                // calculate shift only
-  av.SetSigma(sigmaR,sigmaT);
-  av.eOffsetMax = offsetMax;
-  av.eDZ        = DZ;
-  av.eDPHI      = DPHI;
-  av.eDoFine = 1;
-  av.eSaveCouples = 1;
-  av.eDoublets[0]=av.eDoublets[1]=0.5;
-  av.eDoublets[2]=av.eDoublets[3]=0.005;
+  av.SetSigma(eAP.SigmaR,eAP.SigmaT);
+  av.eOffsetMax = eAP.OffsetMax;
+  av.eDZ        = eAP.DZ;
+  av.eDPHI      = eAP.DPHI;
+  av.eDoFine = eAP.DoFine;
+  av.eSaveCouples = eAP.DoSaveCouples;
+  for(int i=0; i<4; i++) av.eDoublets[i]=eAP.Doublets[i];
 
   //av.InitOutputFile( Form( "p%.3d/%d_%d.al.vsa.root", p2.Plate(), p1.ID(), p2.ID() ) ); 
   av.Align( p1, p2, 0);

@@ -48,7 +48,6 @@ class EdbMosaicAl : public TObject {
 
     void AlignFragments_new();
     void ReadPatterns( EdbFragmentAlignment &fa );
-    void SetAlPar( EdbFragmentAlignment &fa );
     void SetAlPar( const TEnv &env, AlPar &ap );
     void FillHXY( const EdbPattern &pf, TH2F &h );
     

@@ -12,6 +12,7 @@ using namespace std;
 void print_help_message()
 {
   cout<< "\nUsage: \n\t  emaligns2s -A=idA  -B=idB [ -dz=DZ -v=DEBUG] \n";
+  cout<< "\nUsage: \n\t  emaligns2s -FA=fileA  -FB=fileB [ -dz=DZ -v=DEBUG] \n";
   cout<< "\t Standalone alignment between 2 couples trees independent to datasets\n";
   cout<< "\t do not requires the presence of dataset files.\n";
   cout<< "\t Input:  idA.cp.root idB.cp.root align.rootrc\n";
@@ -57,6 +58,11 @@ int main(int argc, char* argv[])
   bool      do_ida      = false;
   bool      do_idb      = false;
   EdbID     idA,idB;
+  bool      do_fa       = false;
+  bool      do_fb       = false;
+  const char *fa=0;
+  const char *fb=0;
+
   float       DZ=0;
 
   for(int i=1; i<argc; i++ ) {
@@ -70,6 +76,14 @@ int main(int argc, char* argv[])
     {
       if(strlen(key)>3) if(idB.Set(key+3))   do_idb=true;
     }
+    else if     (!strncmp(key,"-FA=",4)) 
+    {
+      if(strlen(key)>4) { fa=key+4;   do_fa=true; }
+    }
+    else if     (!strncmp(key,"-FB=",4)) 
+    {
+       if(strlen(key)>4) { fb=key+4;   do_fb=true; }
+    }
     else if     (!strncmp(key,"-dz=",4)) 
     {
       if(strlen(key)>4) DZ = atof(key+4);
@@ -80,7 +94,7 @@ int main(int argc, char* argv[])
     }
   }
   
-  if(!(do_ida&&do_idb))   { print_help_message(); return 0; }
+  if(!((do_ida&&do_idb)||(do_fa&&do_fb)))   { print_help_message(); return 0; }
 
   cenv.SetValue("emalign.env"            , env);
   cenv.ReadFile( cenv.GetValue("emalign.env"   , "align.rootrc") ,kEnvLocal);
@@ -99,6 +113,13 @@ int main(int argc, char* argv[])
     printf("----------------------------------------------------------------------------\n\n");
 
     sproc.AlignNewNopar(idA,idB,cenv,&aff, DZ);
+  }
+  if(do_fa&&do_fb) {
+    printf("\n----------------------------------------------------------------------------\n");
+    printf("align  %s and  %s  with dz = %f\n"        ,fa, fb, DZ);
+    printf("----------------------------------------------------------------------------\n\n");
+
+    sproc.AlignNewCPFiles(fa,fb,cenv,&aff, DZ);
   }
 
   cenv.WriteFile("align.save.rootrc");

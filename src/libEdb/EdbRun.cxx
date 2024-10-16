@@ -442,7 +442,7 @@ void EdbRun::Close()
   const char *status = eFile->GetOption();
 
   GetFile()->cd();
-  eHeader->GetFinishTime()->Set();
+  if(eHeader) eHeader->GetFinishTime()->Set();
 
   if( strcmp(status,"READ") ) {             // file is in "write" mode
     if( !strcmp(status,"CREATE") ) {        // save header in CREATE mode only

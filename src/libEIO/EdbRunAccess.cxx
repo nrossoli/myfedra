@@ -705,7 +705,8 @@ void EdbRunAccess::PrintStat()
   printf("\nSome run statistics:\n");
   printf(  "--------------------\n");
   int nviews=eRun->GetEntries();
-  eNareas=eRun->GetHeader()->GetNareas();
+  EdbRunHeader *header = eRun->GetHeader();
+  if(header) eNareas=header->GetNareas();
   printf("entries    : %d\n", nviews );
   printf("areas      : %d   in the range: ( %d : %d )\n", 
 	 eNareas, eFirstArea,eLastArea );
