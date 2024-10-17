@@ -229,8 +229,10 @@ int AlignToBeam( EdbID id, TEnv &cenv )
       SafeDelete(p2);
     }    
   }
-  mio.SaveCorrMap( id.ePlate, 1, *mapside1,  file.Data() );
-  mio.SaveCorrMap( id.ePlate, 2, *mapside2,  file.Data() );
+  mio.Close();
+  mio.Init( file.Data(), "UPDATE" );
+  mio.SaveCorrMap( id.ePlate, 1, *mapside1 );
+  mio.SaveCorrMap( id.ePlate, 2, *mapside2 );
   Log(1,"mosalignbeam","%s maps saved into %s",id.AsString(),file.Data());
 }
 
@@ -287,7 +289,7 @@ bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLaye
     success=true;
   }
   
-  av.CloseOutputFile();
+  if(do_make_ab0) av.CloseOutputFile();
   return success;
 }
 

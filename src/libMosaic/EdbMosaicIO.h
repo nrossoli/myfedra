@@ -13,13 +13,13 @@
 
 //______________________________________________________________________________
 class EdbMosaicIO : public TObject {
-  public:
+  private:
 
     TFile *eFile;
     
   public:
    EdbMosaicIO(){ eFile=0; }
-   virtual ~EdbMosaicIO(){ if(eFile) eFile->Close(); }
+   virtual ~EdbMosaicIO(){ Close(); }
     
     void Init(const char *file, Option_t* option = "");
     void SaveFragment(EdbPattern &p);
@@ -35,6 +35,7 @@ class EdbMosaicIO : public TObject {
     char *FileName(int brick, int plate, int major, int minor, const char *pref="", const char *suff="");
 
     void DrawFragment(EdbPattern &p);
+    void Close()  { if(eFile) {eFile->Close(); eFile=0;} }
 
     ClassDef(EdbMosaicIO,1)  //Mosaic IO
 };

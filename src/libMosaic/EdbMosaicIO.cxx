@@ -16,6 +16,8 @@ ClassImp(EdbMosaicIO);
 void EdbMosaicIO::Init( const char *file, Option_t* option)
 {
   eFile = new TFile( file, option );
+  if(!eFile || eFile->IsZombie())
+    Log(1, "EdbMosaicIO::Init", "Error: can not open file! %s",file);
 }
 
 //-----------------------------------------------------------------------
@@ -87,7 +89,7 @@ void EdbMosaicIO::SaveCorrMap(int plate, int side, EdbLayer &l)
   {
     eFile->cd();
     l.Write( Form("map_p%d_%d", plate,side ) );
-  }
+  } else Log(1,"EdbMosaicIO::SaveCorrMap","ERROR: file is not opened!");
 }
 
 //-----------------------------------------------------------------------
