@@ -1026,6 +1026,17 @@ void EdbRunAccess::SetImageCorrection(int side, const char *str)
 }
 
 ///______________________________________________________________________________
+void EdbRunAccess::SetImageCorrectionAff(int side, const char *str)
+{
+  // fedra.link.ImageCorrSideX:                 a11 a12 a21 a22 b1 b2
+  if(!(side>0&&side<3)) 
+    Log(1,"EdbRunAccess::SetImageCorrection:", "side %d out of range!", side);
+  else
+    eImageCorr[side].Set(str);
+  Log(2,"EdbRunAccess::SetImageCorrectionAff","%s",str);
+}
+
+///______________________________________________________________________________
 float EdbRunAccess::SegmentWeight(const EdbSegment &s)
 {
   if     (eWeightAlg==1) return Sqrt(s.GetPuls()*s.GetSigmaY()/2.);

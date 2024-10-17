@@ -58,6 +58,12 @@ void EdbMosaicAl::ProcRun( EdbID id, const TEnv &env )
     eRAW.ReadImageMatrixCorrection( 2, env.GetValue("fedra.vsa.ImageMatrixCorrSide2"      , "") );
   }
 
+  eRAW.eDoImageCorr = env.GetValue("fedra.vsa.DoImageCorr", 0  ); 
+  if(eRAW.eDoImageCorr) {
+    eRAW.SetImageCorrectionAff( 1, env.GetValue("fedra.vsa.ImageCorrSide1"      , "1 0 0 1 0 0") );
+    eRAW.SetImageCorrectionAff( 2, env.GetValue("fedra.vsa.ImageCorrSide2"      , "1 0 0 1 0 0") );
+  }
+
   float fx = env.GetValue("fedra.vsa.Xfrag" , 10000);
   float fy = env.GetValue("fedra.vsa.Yfrag" , 5000);
   eMinPeak = env.GetValue("fedra.vsa.MinPeak" , 20);  

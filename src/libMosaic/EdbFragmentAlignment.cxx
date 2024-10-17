@@ -77,6 +77,7 @@ void EdbFragmentAlignment::AlignFragment( EdbPattern &pf )
   
   eAff.Reset();
   eAff.Calculate(eVC,eVC0);                     // from found to original
+  Log(1,"EdbFragmentAlignment::AlignFragment","apply %s",eAff.AsString());
   eVC->Transform(&eAff);
   pf.Transform(&eAff);
 }
@@ -141,6 +142,7 @@ void EdbFragmentAlignment::CheckScale( EdbMosaicPath &mp, EdbAffine2D &aff )
 //-----------------------------------------------------------------------
 void EdbFragmentAlignment::ApplyAff()
 {
+  Log(1,"EdbFragmentAlignment::ApplyAff","%s",eAff.AsString());
   for( int i=0; i<eN; i++ ) GetPattern(i)->Transform(&eAff);
 }
 

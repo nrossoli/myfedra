@@ -90,6 +90,7 @@ class EdbRunAccess : public TObject {
   
   void Set0();
   void SetImageCorrection(int side, const char *str);
+  void SetImageCorrectionAff(int side, const char *str);
   void ReadImageMatrixCorrection(int side, const char *file);
   void ReadImageMatrixCorrection(EdbCell2 &map, const char *file);
   void ClearCuts();
