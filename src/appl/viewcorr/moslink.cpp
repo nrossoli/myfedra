@@ -15,7 +15,7 @@
 
 using namespace std;
 using namespace TMath;
-int  LinkPlate( EdbID id, int from, int nfrag, TEnv &env );
+void LinkPlate( EdbID id, int from, int nfrag, TEnv &env );
 void MergePlate( EdbID id, int from, int nfrag );
 void AlignWithBeam( const float beam[4], 
 			EdbPattern &p1, EdbPattern &p2 );
@@ -187,7 +187,7 @@ void MergePlate( EdbID id, int mfrom, int nfrag )
 }
 
 
-int LinkPlate( EdbID id, int from, int nfrag, TEnv &cenv )
+void LinkPlate( EdbID id, int from, int nfrag, TEnv &cenv )
 {
   EdbScanProc sproc;
   sproc.eProcDirClient="..";
@@ -223,7 +223,6 @@ int LinkPlate( EdbID id, int from, int nfrag, TEnv &cenv )
       delete p2;
     }
   }
-
 }
 
 //-----------------------------------------------------------------------

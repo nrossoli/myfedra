@@ -17,7 +17,7 @@
 
 using namespace std;
 using namespace TMath;
-int  AlignToBeam( EdbID id, TEnv &env );
+void AlignToBeam( EdbID id, TEnv &env );
 bool AlignFragmentToBeam0( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, float offMax, int flag=0);
 void TuneShrinkage( EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2, TEnv &env);
 
@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
 }
 
 //-----------------------------------------------------------------------------------
-int AlignToBeam( EdbID id, TEnv &cenv )
+void AlignToBeam( EdbID id, TEnv &cenv )
 {
   EdbMosaicIO mio;
   TString file;
@@ -233,6 +233,7 @@ int AlignToBeam( EdbID id, TEnv &cenv )
   mio.Init( file.Data(), "UPDATE" );
   mio.SaveCorrMap( id.ePlate, 1, *mapside1 );
   mio.SaveCorrMap( id.ePlate, 2, *mapside2 );
+  mio.Close();
   Log(1,"mosalignbeam","%s maps saved into %s",id.AsString(),file.Data());
 }
 
