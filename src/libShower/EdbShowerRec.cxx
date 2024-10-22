@@ -4025,10 +4025,17 @@ void EdbShowerRec::Execute()
 
         // Get InitiatorBT from eInBTArray
         InBT=(EdbSegP*)eInBTArray->At(i);
+        //Get MCEvent from eInBTArray ------------------------------------------------------------------------------------------------------------------------------ my lines
+        Int_t injectorMCEvent = 0;
+        injectorMCEvent = InBT->MCEvt();
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------
         if (gEDBDEBUGLEVEL>2) {
             cout << " " << endl;
             cout << "EdbShowerRec::Execute() Start reconstruction for Initiator BaseTrack:" <<  endl;
             InBT->PrintNice();
+            //---------------------------------------------------------------------------------------------------------------------------------------------------------------
+            cout << "InBT->MCEvt()= " << injectorMCEvent << endl;
+            //---------------------------------------------------------------------------------------------------------------------------------------------------------------
         }
 
         // Add InBT to RecoShower:
@@ -4081,7 +4088,12 @@ void EdbShowerRec::Execute()
             for (Int_t btloop_cnt=0; btloop_cnt<patternActualPID->GetN(); ++btloop_cnt) {
 
                 Segment = (EdbSegP*)patternActualPID->GetSegment(btloop_cnt);
-
+                //check if the current segment has the same MCEvt of the injector ---------------------------------------------------------------------------------------------------------------
+                if(Segment->MCEvt() != injectorMCEvent) {
+                    if (gEDBDEBUGLEVEL>2) cout << "Segment discarded due to different MCEvt " << endl;
+                    continue;
+                }
+                //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
                 if (gEDBDEBUGLEVEL>4) {
                     cout << "Checking Segment " << btloop_cnt << endl;
                     Segment->PrintNice();
@@ -4109,6 +4121,9 @@ void EdbShowerRec::Execute()
                 }
                 else {
                     RecoShower -> AddSegment(Segment);
+                    //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                    cout << "Segment added to showArray id: " << Segment->ID() << "MCEvt(): " << Segment->MCEvt() << endl;
+                    //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
                     // Attention: If you have a EdbTrackP object and you add a segment, then
                     // you have to manually set Counters for N(), NPl(). It is not done auto.
                     RecoShower -> SetCounters();
